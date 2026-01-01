@@ -1,0 +1,163 @@
+<div class="dashboard-container">
+  <div class="dashboard-content">
+
+    <!-- ========== HEADER ========== -->
+    <div class="dashboard-header">
+      <div>
+        <h1 class="dashboard-title">
+          🌾 Dashboard Agricole
+        </h1>
+        <p class="dashboard-subtitle" *ngIf="userInfo">
+          Bienvenue, {{ userInfo.firstName }} {{ userInfo.lastName }}
+        </p>
+      </div>
+      <button class="btn-outline logout-btn" (click)="logout()">
+        🚪 Se Déconnecter
+      </button>
+    </div>
+
+    <!-- ========== LOADING STATE ========== -->
+    <div *ngIf="isLoading" class="loading-container">
+      <div class="card">
+        <div class="loading-spinner"></div>
+        <p>Chargement des informations...</p>
+      </div>
+    </div>
+
+    <!-- ========== ERROR MESSAGE ========== -->
+    <div *ngIf="errorMessage && !isLoading" class="error-banner">
+      ⚠️ {{ errorMessage }}
+    </div>
+
+    <div *ngIf="!isLoading">
+
+      <!-- ========== USER INFO CARD ========== -->
+      <div *ngIf="userInfo" class="card user-info-card">
+        <h2 class="section-title">👤 Informations Utilisateur</h2>
+        <div class="info-grid">
+          <div class="info-item">
+            <p class="info-label">Nom d'utilisateur</p>
+            <p class="info-value">{{ userInfo.username }}</p>
+          </div>
+          <div class="info-item">
+            <p class="info-label">Email</p>
+            <p class="info-value">{{ userInfo.email }}</p>
+          </div>
+          <div class="info-item-full">
+            <p class="info-label">Rôles</p>
+            <div class="roles-container">
+              <span *ngFor="let role of userInfo.roles" class="role-badge">
+                {{ role }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========== QUICK STATS ========== -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">📊</div>
+          <h3 class="stat-title">Projets Total</h3>
+          <p class="stat-value">{{ projets.length }}</p>
+        </div>
+        <div class="stat-card stat-card-active">
+          <div class="stat-icon">🔄</div>
+          <h3 class="stat-title">En Cours</h3>
+          <p class="stat-value">
+            {{ getProjetsByStatut('EN_COURS').length }}
+          </p>
+        </div>
+        <div class="stat-card stat-card-completed">
+          <div class="stat-icon">✅</div>
+          <h3 class="stat-title">Terminés</h3>
+          <p class="stat-value">
+            {{ getProjetsByStatut('TERMINE').length }}
+          </p>
+        </div>
+        <div class="stat-card stat-card-pending">
+          <div class="stat-icon">⏳</div>
+          <h3 class="stat-title">En Attente</h3>
+          <p class="stat-value">
+            {{ getProjetsByStatut('EN_ATTENTE').length }}
+          </p>
+        </div>
+      </div>
+
+      <!-- ========== LISTE DES PROJETS ========== -->
+      <div class="card projets-section">
+        <div class="section-header">
+          <h2 class="section-title">📋 Mes Projets</h2>
+          <button
+            *ngIf="hasRole('ADMIN')"
+            class="btn-primary"
+            (click)="createNewProjet()">
+            ➕ Nouveau Projet
+          </button>
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="projets.length === 0" class="empty-state">
+          <div class="empty-icon">📂</div>
+          <p class="empty-text">Aucun projet disponible</p>
+          <button
+            *ngIf="hasRole('ADMIN')"
+            class="btn-primary"
+            (click)="createNewProjet()">
+            Créer le premier projet
+          </button>
+        </div>
+
+        <!-- Projets Grid -->
+        <div *ngIf="projets.length > 0" class="projets-grid">
+          <div
+            *ngFor="let projet of projets"
+            class="projet-card"
+            (click)="viewProjetDetail(projet.idProjet)">
+
+            <!-- Card Header -->
+            <div class="projet-header">
+              <h3 class="projet-title">{{ projet.nom }}</h3>
+              <span
+                class="projet-status"
+                [ngClass]="getStatutColor(projet.statusProjet)">
+                {{ getStatutIcon(projet.statusProjet) }} {{ getStatutLabel(projet.statusProjet) }}
+              </span>
+            </div>
+
+            <!-- Description -->
+            <p class="projet-description">
+              {{ projet.description }}
+            </p>
+
+            <!-- Type de Culture -->
+            <div class="projet-culture">
+              <span class="culture-icon">🌱</span>
+              <span class="culture-text">{{ projet.typeCulture }}</span>
+            </div>
+
+            <!-- Footer -->
+            <div class="projet-footer">
+              <div class="projet-dates">
+                <div class="date-item">
+                  <span class="date-label">📅 Début:</span>
+                  <span class="date-value">{{ projet.dateDebut | date: 'dd/MM/yyyy' }}</span>
+                </div>
+                <div class="date-item">
+                  <span class="date-label">📅 Fin:</span>
+                  <span class="date-value">{{ projet.dateFin | date: 'dd/MM/yyyy' }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Button -->
+            <button class="btn-view">
+              Voir les détails →
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

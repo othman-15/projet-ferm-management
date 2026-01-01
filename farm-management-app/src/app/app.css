@@ -1,0 +1,27 @@
+.container {
+    min-height: 100vh;
+    background-color: #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.welcome-card {
+    max-width: 28rem;
+}
+
+.title {
+    font-size: 1.875rem;
+    font-weight: bold;
+    color: #16a34a;
+    margin-bottom: 1rem;
+}
+
+.subtitle {
+    color: #6b7280;
+    margin-bottom: 1rem;
+}
+
+.btn-full {
+    width: 100%;
+}
