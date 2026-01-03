@@ -17,6 +17,12 @@ export const routes: Routes = [
       .then(m => m.DashboardComponent)
   },
   {
+    path: 'projets/:id',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/projets/projet-detail/projet-detail')
+      .then(m => m.ProjetDetailComponent)
+  },
+  {
     path: 'unauthorized',
     loadComponent: () => import('./shared/components/unauthorized/unauthorized')
       .then(m => m.UnauthorizedComponent)

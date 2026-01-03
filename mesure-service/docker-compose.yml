@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  # MongoDB pour le microservice Mesure
+  mongodb-mesure:
+    image: mongo:7.0
+    container_name: mesure-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mesure_admin
+      MONGO_INITDB_ROOT_PASSWORD: mesure_pass
+      MONGO_INITDB_DATABASE: mesure_db
+    volumes:
+      - mongodb_mesure_data:/data/db
+      - mongodb_mesure_config:/data/configdb
+    networks:
+      - mesure-network
+
+  # (Optionnel) Mongo Express - Interface web pour MongoDB
+  mongo-express:
+    image: mongo-express:1.0.2
+    container_name: mesure-mongo-express
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: mesure_admin
+      ME_CONFIG_MONGODB_ADMINPASSWORD: mesure_pass
+      ME_CONFIG_MONGODB_URL: mongodb://mesure_admin:mesure_pass@mongodb-mesure:27017/
+      ME_CONFIG_BASICAUTH: false
+    depends_on:
+      - mongodb-mesure
+    networks:
+      - mesure-network
+
+volumes:
+  mongodb_mesure_data:
+    driver: local
+  mongodb_mesure_config:
+    driver: local
+
+networks:
+  mesure-network:
+    driver: bridge

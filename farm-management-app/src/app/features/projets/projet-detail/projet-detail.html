@@ -1,0 +1,170 @@
+<div class="detail-container">
+  <div class="detail-content">
+
+    <!-- ========== LOADING STATE ========== -->
+    <div *ngIf="isLoading" class="loading-container">
+      <div class="card">
+        <div class="loading-spinner"></div>
+        <p>Chargement des détails du projet...</p>
+      </div>
+    </div>
+
+    <!-- ========== ERROR MESSAGE ========== -->
+    <div *ngIf="errorMessage && !isLoading" class="error-section">
+      <div class="card error-card">
+        <div class="error-content">
+          <span class="error-icon">⚠️</span>
+          <div>
+            <h2 class="error-title">Erreur</h2>
+            <p class="error-message">{{ errorMessage }}</p>
+          </div>
+        </div>
+        <button class="btn-primary" (click)="goBack()">
+          ← Retour au Dashboard
+        </button>
+      </div>
+    </div>
+
+    <!-- ========== PROJET DETAILS ========== -->
+    <div *ngIf="projet && !isLoading">
+
+      <!-- Header avec Navigation -->
+      <div class="detail-header">
+        <button class="btn-back" (click)="goBack()">
+          ← Retour
+        </button>
+        <div class="header-actions" *ngIf="hasRole('ADMIN')">
+          <button class="btn-secondary" (click)="editProjet()">
+            ✏️ Modifier
+          </button>
+          <button class="btn-danger" (click)="deleteProjet()">
+            🗑️ Supprimer
+          </button>
+        </div>
+      </div>
+
+      <!-- Carte Principale du Projet -->
+      <div class="card projet-main-card">
+        <div class="projet-main-header">
+          <div class="projet-main-info">
+            <h1 class="projet-main-title">{{ projet.nom }}</h1>
+            <p class="projet-main-description">{{ projet.description }}</p>
+          </div>
+          <span
+            class="projet-status-large"
+            [ngClass]="getStatutColor(projet.statut)">
+            {{ getStatutIcon(projet.statut) }} {{ getStatutLabel(projet.statut) }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Section Équipe -->
+      <div class="card equipe-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <span class="title-icon">👥</span>
+            Équipe du Projet
+          </h2>
+          <button
+            *ngIf="hasRole('ADMIN')"
+            class="btn-primary"
+            (click)="addBiologiste()">
+            ➕ Ajouter un Biologiste
+          </button>
+        </div>
+
+        <!-- Empty State -->
+        <div *ngIf="!projet.affectations || projet.affectations.length === 0" class="empty-state">
+          <div class="empty-icon">👤</div>
+          <p class="empty-text">Aucun biologiste affecté à ce projet</p>
+          <p class="empty-subtext">Commencez par ajouter des membres à l'équipe</p>
+          <button
+            *ngIf="hasRole('ADMIN')"
+            class="btn-primary"
+            (click)="addBiologiste()">
+            Affecter le premier biologiste
+          </button>
+        </div>
+
+        <!-- Liste des Biologistes -->
+        <div *ngIf="projet.affectations && projet.affectations.length > 0" class="biologistes-grid">
+          <div
+            *ngFor="let affectation of projet.affectations"
+            class="biologiste-card">
+
+            <!-- Avatar -->
+            <div class="biologiste-avatar">
+              {{ getInitials(affectation.nom) }}
+            </div>
+
+            <!-- Informations -->
+            <div class="biologiste-info">
+              <h3 class="biologiste-nom">{{ affectation.nom }}</h3>
+              <div class="biologiste-role-badge">
+                {{ affectation.roleDansProjet }}
+              </div>
+
+              <div class="biologiste-details">
+                <div class="detail-item" *ngIf="affectation.specialite">
+                  <span class="detail-icon">🔬</span>
+                  <span class="detail-text">{{ affectation.specialite }}</span>
+                </div>
+                <div class="detail-item" *ngIf="affectation.telephone">
+                  <span class="detail-icon">📞</span>
+                  <span class="detail-text">{{ affectation.telephone }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-icon">📅</span>
+                  <span class="detail-text">
+                    Affecté {{ getTimeSinceAffectation(affectation.dateAffectation) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section Statistiques -->
+      <div class="stats-row">
+        <div class="stat-box stat-box-primary">
+          <div class="stat-icon">👥</div>
+          <div class="stat-content">
+            <p class="stat-label">Membres de l'équipe</p>
+            <p class="stat-value">{{ projet.affectations.length || 0 }}</p>
+          </div>
+        </div>
+        <div class="stat-box stat-box-secondary">
+          <div class="stat-icon">🔬</div>
+          <div class="stat-content">
+            <p class="stat-label">Analyses</p>
+            <p class="stat-value">-</p>
+            <p class="stat-note">Bientôt disponible</p>
+          </div>
+        </div>
+        <div class="stat-box stat-box-success">
+          <div class="stat-icon">📊</div>
+          <div class="stat-content">
+            <p class="stat-label">Résultats</p>
+            <p class="stat-value">-</p>
+            <p class="stat-note">Bientôt disponible</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section Activité Récente (Placeholder) -->
+      <div class="card activity-section">
+        <h2 class="section-title">
+          <span class="title-icon">📋</span>
+          Activité Récente
+        </h2>
+        <div class="empty-state">
+          <div class="empty-icon">📝</div>
+          <p class="empty-text">Aucune activité récente</p>
+          <p class="empty-subtext">Les activités du projet apparaîtront ici</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
