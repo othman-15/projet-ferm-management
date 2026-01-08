@@ -56,7 +56,14 @@ public class EquipmentController {
         );
     }
 
-
+    @GetMapping("/capteurs/{capteurId}")
+    public ResponseEntity<ResponseCapteurDto> getCapteurById(
+            @PathVariable Long capteurId
+    ) {
+        return ResponseEntity.ok(
+                equipmentService.getCapteurById(capteurId)
+        );
+    }
 
     @PostMapping("/{equipmentId}/capteurs")
     @PreAuthorize("hasAuthority('ADMIN')")

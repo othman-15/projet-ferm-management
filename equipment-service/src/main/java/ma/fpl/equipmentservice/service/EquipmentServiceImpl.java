@@ -45,7 +45,14 @@ public class EquipmentServiceImpl implements EquipmentService {
         return equipmentMapper.equipementToDTO(saved);
     }
 
-
+    @Override
+    public ResponseCapteurDto getCapteurById(Long capteurId) {
+        Capteur capteur = capteurRepository.findById(capteurId)
+                .orElseThrow(() ->
+                        new EntityNotFoundException("Capteur non trouvé : " + capteurId)
+                );
+        return capteurMapper.capteurToDTO(capteur);
+    }
     @Override
     public List<ResponseEquipmentDto> getAllEquipments() {
         return equipmentRepository.findAll()

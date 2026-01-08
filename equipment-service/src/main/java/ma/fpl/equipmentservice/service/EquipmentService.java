@@ -17,4 +17,5 @@ public interface EquipmentService {
 
     ResponseCapteurDto addCapteurToEquipment(Long equipmentId, RequestCapteurDto dto);
     List<ResponseCapteurDto> getCapteursByEquipment(Long equipmentId);
+    ResponseCapteurDto getCapteurById(Long capteurId);
 }

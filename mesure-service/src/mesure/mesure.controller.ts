@@ -8,25 +8,17 @@ import {
     Query,
     UseGuards,
     Request,
+    Headers,
 } from '@nestjs/common';
-import {
-    ApiTags,
-    ApiOperation,
-    ApiResponse,
-    ApiBearerAuth,
-    ApiParam,
-} from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
-import { MesureService } from './mesure.service';
-import { CreateMesureDto } from './dto/create-mesure.dto';
-import { QueryMesureDto } from './dto/query-mesure.dto';
-import { RolesGuard } from '../auth/roles.guard';
-import { Roles } from '../auth/roles.decorator';
+import {ApiBearerAuth, ApiOperation, ApiResponse, ApiTags} from "@nestjs/swagger";
+import {AuthGuard} from "@nestjs/passport";
+import {RolesGuard} from "../auth/roles.guard";
+import {MesureService} from "./mesure.service";
+import {Roles} from "../auth/roles.decorator";
+import {CreateMesureDto} from "./dto/create-mesure.dto";
+import {QueryMesureDto} from "./dto/query-mesure.dto";
 
-/**
- * Controller REST pour les mesures
- * Tous les endpoints nécessitent une authentification JWT
- */
+
 @ApiTags('Mesures')
 @ApiBearerAuth('JWT')
 @Controller('mesures')
@@ -34,99 +26,66 @@ import { Roles } from '../auth/roles.decorator';
 export class MesureController {
     constructor(private readonly mesureService: MesureService) {}
 
-    /**
-     * POST /mesures - Créer une nouvelle mesure
-     * Accessible par : ADMIN, BIOLOGISTE
-     */
+    // Helper pour extraire le token
+    private extractToken(headers: any): string {
+        const authHeader = headers.authorization || headers.Authorization;
+        return authHeader?.replace('Bearer ', '') || '';
+    }
+
     @Post()
     @Roles('ADMIN', 'BIOLOGISTE')
     @ApiOperation({ summary: 'Créer une nouvelle mesure' })
-    @ApiResponse({
-        status: 201,
-        description: 'Mesure créée avec succès',
-    })
-    @ApiResponse({ status: 400, description: 'Données invalides' })
-    @ApiResponse({ status: 401, description: 'Non authentifié' })
-    @ApiResponse({ status: 403, description: 'Accès refusé' })
-    async create(@Body() createMesureDto: CreateMesureDto, @Request() req) {
-        return this.mesureService.create(createMesureDto, req.user);
+    @ApiResponse({ status: 201, description: 'Mesure créée avec succès' })
+    @ApiResponse({ status: 400, description: 'Données invalides, capteur ou projet inexistant' })
+    @ApiResponse({ status: 403, description: 'Accès refusé au projet' })
+    async create(
+        @Body() createMesureDto: CreateMesureDto,
+        @Request() req,
+        @Headers() headers,
+    ) {
+        const token = this.extractToken(headers);
+        return this.mesureService.create(createMesureDto, req.user, token);
     }
 
-    /**
-     * GET /mesures - Récupérer toutes les mesures avec filtres
-     * ADMIN : toutes les mesures
-     * BIOLOGISTE : uniquement ses projets
-     */
     @Get()
     @Roles('ADMIN', 'BIOLOGISTE')
     @ApiOperation({ summary: 'Récupérer toutes les mesures' })
-    @ApiResponse({
-        status: 200,
-        description: 'Liste des mesures avec pagination',
-    })
-    @ApiResponse({ status: 401, description: 'Non authentifié' })
-    @ApiResponse({ status: 403, description: 'Accès refusé' })
-    async findAll(@Query() query: QueryMesureDto, @Request() req) {
-        return this.mesureService.findAll(query, req.user);
+    async findAll(
+        @Query() query: QueryMesureDto,
+        @Request() req,
+        @Headers() headers,
+    ) {
+        const token = this.extractToken(headers);
+        return this.mesureService.findAll(query, req.user, token);
     }
 
-    /**
-     * GET /mesures/projet/:projetId - Récupérer les mesures d'un projet
-     * ADMIN : toujours autorisé
-     * BIOLOGISTE : seulement si affecté au projet
-     */
     @Get('projet/:projetId')
     @Roles('ADMIN', 'BIOLOGISTE')
-    @ApiOperation({ summary: 'Récupérer les mesures d\'un projet' })
-    @ApiParam({
-        name: 'projetId',
-        description: 'ID du projet',
-        example: '660e8400-e29b-41d4-a716-446655440002',
-    })
-    @ApiResponse({
-        status: 200,
-        description: 'Liste des mesures du projet',
-    })
-    @ApiResponse({ status: 401, description: 'Non authentifié' })
-    @ApiResponse({ status: 403, description: 'Accès refusé' })
-    async findByProjet(@Param('projetId') projetId: string, @Request() req) {
-        return this.mesureService.findByProjet(projetId, req.user);
+    @ApiOperation({ summary: "Récupérer les mesures d'un projet" })
+    async findByProjet(
+        @Param('projetId') projetId: string,
+        @Request() req,
+        @Headers() headers,
+    ) {
+        const token = this.extractToken(headers);
+        return this.mesureService.findByProjet(projetId, req.user, token);
     }
 
-    /**
-     * GET /mesures/:id - Récupérer une mesure par ID
-     */
     @Get(':id')
     @Roles('ADMIN', 'BIOLOGISTE')
     @ApiOperation({ summary: 'Récupérer une mesure par ID' })
-    @ApiParam({
-        name: 'id',
-        description: 'ID de la mesure',
-        example: '550e8400-e29b-41d4-a716-446655440000',
-    })
-    @ApiResponse({ status: 200, description: 'Détails de la mesure' })
-    @ApiResponse({ status: 404, description: 'Mesure introuvable' })
-    @ApiResponse({ status: 401, description: 'Non authentifié' })
-    async findOne(@Param('id') id: string, @Request() req) {
-        return this.mesureService.findOne(id, req.user);
+    async findOne(
+        @Param('id') id: string,
+        @Request() req,
+        @Headers() headers,
+    ) {
+        const token = this.extractToken(headers);
+        return this.mesureService.findOne(id, req.user, token);
     }
 
-    /**
-     * DELETE /mesures/:id - Supprimer une mesure
-     * Accessible uniquement par ADMIN
-     */
     @Delete(':id')
     @Roles('ADMIN')
     @ApiOperation({ summary: 'Supprimer une mesure (ADMIN uniquement)' })
-    @ApiParam({
-        name: 'id',
-        description: 'ID de la mesure',
-        example: '550e8400-e29b-41d4-a716-446655440000',
-    })
-    @ApiResponse({ status: 200, description: 'Mesure supprimée' })
-    @ApiResponse({ status: 404, description: 'Mesure introuvable' })
-    @ApiResponse({ status: 401, description: 'Non authentifié' })
-    @ApiResponse({ status: 403, description: 'Accès refusé (rôle ADMIN requis)' })
     async remove(@Param('id') id: string) {
         await this.mesureService.remove(id);
         return { message: 'Mesure supprimée avec succès' };

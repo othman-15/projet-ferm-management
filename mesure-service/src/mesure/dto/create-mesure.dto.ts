@@ -56,19 +56,23 @@ export class CreateMesureDto {
     })
     qualiteDonnee: QualiteDonnee;
 
+    // ✅ MODIFIÉ : Accepte des IDs numériques (ex: "1", "2", "123")
     @ApiProperty({
-        description: 'Identifiant UUID du capteur',
-        example: '550e8400-e29b-41d4-a716-446655440001',
+        description: 'Identifiant du capteur (numérique ou UUID)',
+        example: '1',
+        type: String,
     })
     @IsNotEmpty({ message: "L'identifiant du capteur est obligatoire" })
-    @IsUUID('4', { message: 'Identifiant du capteur invalide' })
+    @IsString({ message: "L'identifiant du capteur doit être une chaîne de caractères" })
     capteurId: string;
 
+    // ✅ MODIFIÉ : Accepte des IDs numériques (ex: "1", "2", "123")
     @ApiProperty({
-        description: 'Identifiant UUID du projet',
-        example: '660e8400-e29b-41d4-a716-446655440002',
+        description: 'Identifiant du projet (numérique ou UUID)',
+        example: '1',
+        type: String,
     })
     @IsNotEmpty({ message: "L'identifiant du projet est obligatoire" })
-    @IsUUID('4', { message: 'Identifiant du projet invalide' })
+    @IsString({ message: "L'identifiant du projet doit être une chaîne de caractères" })
     projetId: string;
 }
