@@ -1,0 +1,140 @@
+<div class="equipment-container">
+  <div class="equipment-content">
+
+    <!-- ========== HEADER ========== -->
+    <div class="equipment-header">
+      <div class="header-left">
+        <button class="btn-back" (click)="goBack()">
+          ← Retour
+        </button>
+        <div class="header-title-section">
+          <h1 class="equipment-title">
+            🔧 Équipements & Capteurs
+          </h1>
+          <p class="equipment-subtitle">
+            Gérez tous les équipements et capteurs de la ferme
+          </p>
+        </div>
+      </div>
+      <button
+        *ngIf="hasRole('ADMIN')"
+        class="btn-primary"
+        (click)="createNewEquipment()">
+        ➕ Nouvel Équipement
+      </button>
+    </div>
+
+    <!-- ========== LOADING STATE ========== -->
+    <div *ngIf="isLoading" class="loading-container">
+      <div class="card">
+        <div class="loading-spinner"></div>
+        <p>Chargement des équipements...</p>
+      </div>
+    </div>
+
+    <!-- ========== ERROR MESSAGE ========== -->
+    <div *ngIf="errorMessage && !isLoading" class="error-banner">
+      ⚠️ {{ errorMessage }}
+    </div>
+
+    <!-- ========== CONTENT ========== -->
+    <div *ngIf="!isLoading">
+
+      <!-- Quick Stats -->
+      <div class="stats-grid">
+        <div class="stat-card stat-card-total">
+          <div class="stat-icon">🔧</div>
+          <div class="stat-content">
+            <p class="stat-label">Total Équipements</p>
+            <p class="stat-value">{{ equipments.length }}</p>
+          </div>
+        </div>
+        <div class="stat-card stat-card-active">
+          <div class="stat-icon">📊</div>
+          <div class="stat-content">
+            <p class="stat-label">Capteurs Actifs</p>
+            <p class="stat-value">{{ getTotalCapteurs() }}</p>
+          </div>
+        </div>
+        <div class="stat-card stat-card-tracteur">
+          <div class="stat-icon">🚜</div>
+          <div class="stat-content">
+            <p class="stat-label">Tracteurs</p>
+            <p class="stat-value">{{ countEquipmentsByType('TRACTEUR') }}</p>
+          </div>
+        </div>
+        <div class="stat-card stat-card-irrigation">
+          <div class="stat-icon">💧</div>
+          <div class="stat-content">
+            <p class="stat-label">Irrigation</p>
+            <p class="stat-value">{{ countEquipmentsByType('IRRIGATION') }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="equipments.length === 0" class="card empty-state">
+        <div class="empty-icon">🔧</div>
+        <p class="empty-text">Aucun équipement disponible</p>
+        <p class="empty-subtext">Commencez par ajouter votre premier équipement</p>
+        <button
+          *ngIf="hasRole('ADMIN')"
+          class="btn-primary"
+          (click)="createNewEquipment()">
+          Créer le premier équipement
+        </button>
+      </div>
+
+      <!-- Equipment Grid -->
+      <div *ngIf="equipments.length > 0" class="equipments-grid">
+        <div
+          *ngFor="let equipment of equipments"
+          class="equipment-card"
+          (click)="viewEquipmentDetail(equipment.id)">
+
+          <!-- Card Header -->
+          <div class="equipment-header-card">
+            <div class="equipment-type-badge" [ngClass]="getEquipmentTypeColor(equipment.type)">
+              {{ getEquipmentTypeIcon(equipment.type) }} {{ getEquipmentTypeLabel(equipment.type) }}
+            </div>
+            <button
+              *ngIf="hasRole('ADMIN')"
+              class="btn-delete"
+              (click)="deleteEquipment($event, equipment.id)"
+              title="Supprimer">
+              🗑️
+            </button>
+          </div>
+
+          <!-- Equipment Info -->
+          <h3 class="equipment-name">{{ equipment.nom }}</h3>
+          <p class="equipment-description" *ngIf="equipment.description">
+            {{ equipment.description }}
+          </p>
+
+          <!-- Equipment Details -->
+          <div class="equipment-details">
+            <div class="detail-item">
+              <span class="detail-icon">📅</span>
+              <span class="detail-text">
+                {{ equipment.dateInstallation | date: 'dd/MM/yyyy' }}
+              </span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-icon">📊</span>
+              <span class="detail-text">
+                {{ equipment.nombreCapteurs || 0 }} capteur(s)
+              </span>
+            </div>
+          </div>
+
+          <!-- View Button -->
+          <button class="btn-view">
+            Voir les détails →
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

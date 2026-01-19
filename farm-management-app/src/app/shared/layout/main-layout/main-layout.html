@@ -1,0 +1,215 @@
+<div class="layout-container">
+
+  <!-- ========== SIDEBAR ========== -->
+  <aside class="sidebar" [class.sidebar-closed]="!isSidebarOpen">
+
+    <!-- Logo -->
+    <div class="sidebar-header">
+      <div class="logo">
+        <span class="logo-icon">🌾</span>
+        <span class="logo-text" *ngIf="isSidebarOpen">Farm Manager</span>
+      </div>
+    </div>
+
+    <!-- Navigation Menu -->
+    <nav class="sidebar-nav">
+
+      <!-- Dashboard -->
+      <a
+        routerLink="/dashboard"
+        class="nav-item"
+        [class.active]="isActive('/dashboard')"
+        routerLinkActive="active">
+        <span class="nav-icon">📊</span>
+        <span class="nav-text" *ngIf="isSidebarOpen">Dashboard</span>
+      </a>
+
+      <!-- Projets -->
+      <a
+        routerLink="/projets"
+        class="nav-item"
+        [class.active]="isActive('/projets')"
+        routerLinkActive="active">
+        <span class="nav-icon">📋</span>
+        <span class="nav-text" *ngIf="isSidebarOpen">Projets</span>
+      </a>
+
+      <!-- Équipements (Admin only) -->
+      <a
+        *ngIf="hasRole('ADMIN')"
+        routerLink="/equipments"
+        class="nav-item"
+        [class.active]="isActive('/equipments')"
+        routerLinkActive="active">
+        <span class="nav-icon">🔧</span>
+        <span class="nav-text" *ngIf="isSidebarOpen">Équipements</span>
+      </a>
+
+      <!-- Biologistes -->
+      <a
+        routerLink="/biologistes"
+        class="nav-item"
+        [class.active]="isActive('/biologistes')"
+        routerLinkActive="active">
+        <span class="nav-icon">👥</span>
+        <span class="nav-text" *ngIf="isSidebarOpen">Biologistes</span>
+      </a>
+
+      <!-- Analyses (placeholder) -->
+      <a
+        routerLink="/analyses"
+        class="nav-item"
+        [class.active]="isActive('/analyses')"
+        routerLinkActive="active">
+        <span class="nav-icon">🔬</span>
+        <span class="nav-text" *ngIf="isSidebarOpen">Analyses</span>
+      </a>
+
+      <!-- Rapports (placeholder) -->
+      <a
+        routerLink="/rapports"
+        class="nav-item"
+        [class.active]="isActive('/rapports')"
+        routerLinkActive="active">
+        <span class="nav-icon">📈</span>
+        <span class="nav-text" *ngIf="isSidebarOpen">Rapports</span>
+      </a>
+
+      <!-- Divider -->
+      <div class="nav-divider" *ngIf="isSidebarOpen"></div>
+
+      <!-- Paramètres (Admin only) -->
+      <a
+        *ngIf="hasRole('ADMIN')"
+        routerLink="/settings"
+        class="nav-item"
+        [class.active]="isActive('/settings')"
+        routerLinkActive="active">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-text" *ngIf="isSidebarOpen">Paramètres</span>
+      </a>
+      <div class="nav-group">
+        <a
+          routerLink="/mesures"
+          class="nav-item"
+          [class.active]="isActive('/mesures')"
+          routerLinkActive="active">
+          <span class="nav-icon">📊</span>
+          <span class="nav-text" *ngIf="isSidebarOpen">Mesures</span>
+        </a>
+
+        <a
+          *ngIf="isSidebarOpen"
+          routerLink="/mesures/charts"
+          class="nav-item nav-item-sub"
+          [class.active]="isActive('/mesures/charts')"
+          routerLinkActive="active">
+          <span class="nav-icon">📈</span>
+          <span class="nav-text">Graphiques</span>
+        </a>
+      </div>
+
+    </nav>
+
+    <!-- Sidebar Footer -->
+    <div class="sidebar-footer">
+      <button class="toggle-btn" (click)="toggleSidebar()">
+        <span *ngIf="isSidebarOpen">◀</span>
+        <span *ngIf="!isSidebarOpen">▶</span>
+      </button>
+    </div>
+
+  </aside>
+
+  <!-- ========== MAIN CONTENT ========== -->
+  <div class="main-wrapper">
+
+    <!-- Top Bar -->
+    <header class="topbar">
+
+      <!-- Left Section -->
+      <div class="topbar-left">
+        <button class="mobile-menu-btn" (click)="toggleMobileMenu()">
+          ☰
+        </button>
+        <h2 class="page-title">{{ getPageTitle() }}</h2>
+      </div>
+
+      <!-- Right Section -->
+      <div class="topbar-right">
+
+        <!-- Notifications -->
+        <button class="topbar-icon-btn" title="Notifications">
+          <span class="icon">🔔</span>
+          <span class="badge">3</span>
+        </button>
+
+        <!-- User Menu -->
+        <div class="user-menu">
+          <div class="user-avatar">
+            {{ getUserInitials() }}
+          </div>
+          <div class="user-info" *ngIf="userInfo">
+            <span class="user-name">{{ userInfo.firstName }} {{ userInfo.lastName }}</span>
+            <span class="user-role">{{ userInfo.roles[0] }}</span>
+          </div>
+          <button class="logout-btn" (click)="logout()" title="Se déconnecter">
+            🚪
+          </button>
+        </div>
+
+      </div>
+
+    </header>
+
+    <!-- Page Content -->
+    <main class="main-content">
+      <router-outlet></router-outlet>
+    </main>
+
+  </div>
+
+  <!-- ========== MOBILE SIDEBAR OVERLAY ========== -->
+  <div
+    class="mobile-overlay"
+    *ngIf="isMobileMenuOpen"
+    (click)="toggleMobileMenu()">
+  </div>
+
+  <aside
+    class="sidebar mobile-sidebar"
+    [class.mobile-sidebar-open]="isMobileMenuOpen">
+
+    <!-- Mobile Menu Content (same as sidebar) -->
+    <div class="sidebar-header">
+      <div class="logo">
+        <span class="logo-icon">🌾</span>
+        <span class="logo-text">Farm Manager</span>
+      </div>
+      <button class="close-mobile-btn" (click)="toggleMobileMenu()">
+        ✕
+      </button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a routerLink="/dashboard" class="nav-item" (click)="toggleMobileMenu()">
+        <span class="nav-icon">📊</span>
+        <span class="nav-text">Dashboard</span>
+      </a>
+      <a routerLink="/projets" class="nav-item" (click)="toggleMobileMenu()">
+        <span class="nav-icon">📋</span>
+        <span class="nav-text">Projets</span>
+      </a>
+      <a *ngIf="hasRole('ADMIN')" routerLink="/equipments" class="nav-item" (click)="toggleMobileMenu()">
+        <span class="nav-icon">🔧</span>
+        <span class="nav-text">Équipements</span>
+      </a>
+      <a routerLink="/biologistes" class="nav-item" (click)="toggleMobileMenu()">
+        <span class="nav-icon">👥</span>
+        <span class="nav-text">Biologistes</span>
+      </a>
+    </nav>
+
+  </aside>
+
+</div>

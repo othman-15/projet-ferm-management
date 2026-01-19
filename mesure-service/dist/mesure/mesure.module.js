@@ -10,9 +10,9 @@ exports.MesureModule = void 0;
 const common_1 = require("@nestjs/common");
 const mongoose_1 = require("@nestjs/mongoose");
 const axios_1 = require("@nestjs/axios");
-const mesure_controller_1 = require("./mesure.controller");
 const mesure_service_1 = require("./mesure.service");
 const mesure_entity_1 = require("./entities/mesure.entity");
+const mesure_resolver_1 = require("./graphql/mesure.resolver");
 const equipment_client_1 = require("../clients/equipment.client");
 const projet_client_1 = require("../clients/projet.client");
 let MesureModule = class MesureModule {
@@ -29,11 +29,11 @@ exports.MesureModule = MesureModule = __decorate([
                 maxRedirects: 5,
             }),
         ],
-        controllers: [mesure_controller_1.MesureController],
         providers: [
             mesure_service_1.MesureService,
             equipment_client_1.EquipmentClient,
             projet_client_1.ProjetClient,
+            mesure_resolver_1.MesureResolver,
         ],
         exports: [mesure_service_1.MesureService],
     })

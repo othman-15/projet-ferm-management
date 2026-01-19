@@ -1,0 +1,28 @@
+/* Styles spécifiques pour le checkbox */
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  font-weight: 500;
+  color: #374151;
+}
+
+.checkbox-input {
+  width: 1.25rem;
+  height: 1.25rem;
+  cursor: pointer;
+  accent-color: #16a34a;
+}
+
+.help-text {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-style: italic;
+}

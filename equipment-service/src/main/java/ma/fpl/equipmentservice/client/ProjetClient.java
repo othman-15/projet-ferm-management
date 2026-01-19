@@ -7,7 +7,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
 @FeignClient( name = "Projet-service",
-        url = "http://localhost:8085")
+        url = "${GATEWAY_URL:http://localhost:8888}/PROJET-SERVICE")
+
 public interface ProjetClient {
 
     @GetMapping("/v1/projets/{id}")

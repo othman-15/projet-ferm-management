@@ -1,0 +1,123 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+input CreateMesureInput {
+  """Identifiant du capteur"""
+  capteurId: String!
+
+  """Date et heure de la mesure (ISO 8601)"""
+  dateMesure: String!
+
+  """Identifiant du projet"""
+  projetId: String!
+
+  """Qualité de la donnée"""
+  qualiteDonnee: QualiteDonnee!
+
+  """Unité de mesure"""
+  unite: String!
+
+  """Valeur numérique de la mesure"""
+  valeur: Float!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type Mesure {
+  """Identifiant du capteur"""
+  capteurId: String!
+
+  """Date de création"""
+  createdAt: DateTime
+
+  """Date et heure de la mesure"""
+  dateMesure: DateTime!
+
+  """Identifiant unique de la mesure"""
+  id: ID!
+
+  """Identifiant du projet"""
+  projetId: String!
+
+  """Qualité de la donnée"""
+  qualiteDonnee: QualiteDonnee!
+
+  """Unité de mesure"""
+  unite: String!
+
+  """Date de mise à jour"""
+  updatedAt: DateTime
+
+  """Valeur numérique de la mesure"""
+  valeur: Float!
+}
+
+type MesurePagination {
+  """Liste des mesures"""
+  data: [Mesure!]!
+
+  """Nombre de résultats par page"""
+  limit: Int!
+
+  """Numéro de la page actuelle"""
+  page: Int!
+
+  """Nombre total de mesures"""
+  total: Int!
+
+  """Nombre total de pages"""
+  totalPages: Int!
+}
+
+type Mutation {
+  """Créer une nouvelle mesure"""
+  createMesure(input: CreateMesureInput!): Mesure!
+
+  """Supprimer une mesure (ADMIN uniquement)"""
+  deleteMesure(id: String!): Boolean!
+}
+
+"""Qualité de la donnée mesurée"""
+enum QualiteDonnee {
+  BONNE
+  MAUVAISE
+  MOYENNE
+}
+
+type Query {
+  """Récupérer une mesure par son ID"""
+  mesure(id: String!): Mesure!
+
+  """Récupérer toutes les mesures avec pagination"""
+  mesures(filters: QueryMesureInput): MesurePagination!
+
+  """Récupérer toutes les mesures d'un projet"""
+  mesuresByProjet(projetId: String!): [Mesure!]!
+}
+
+input QueryMesureInput {
+  """Filtrer par capteur"""
+  capteurId: String
+
+  """Date de début (ISO 8601)"""
+  dateDebut: String
+
+  """Date de fin (ISO 8601)"""
+  dateFin: String
+
+  """Nombre de résultats par page"""
+  limit: Int = 20
+
+  """Numéro de page"""
+  page: Int = 1
+
+  """Filtrer par projet"""
+  projetId: String
+
+  """Filtrer par qualité"""
+  qualiteDonnee: QualiteDonnee
+}

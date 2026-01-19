@@ -15,7 +15,7 @@ import {
 })
 export class ProjetService {
   private http = inject(HttpClient);
-  private apiUrl = `${environment.apiUrls.projet}/v1/projets`; // ✅ Utiliser apiUrls.projet
+  private apiUrl = environment.apiUrls.projet + '/v1/projets'; // Via Gateway
 
   getAllProjets(): Observable<ResponseProjetDTO[]> {
     return this.http.get<ResponseProjetDTO[]>(this.apiUrl);

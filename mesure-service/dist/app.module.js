@@ -13,6 +13,9 @@ exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
 const config_1 = require("@nestjs/config");
 const mongoose_1 = require("@nestjs/mongoose");
+const graphql_1 = require("@nestjs/graphql");
+const apollo_1 = require("@nestjs/apollo");
+const path_1 = require("path");
 const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
 const auth_module_1 = require("./auth/auth.module");
@@ -35,6 +38,14 @@ exports.AppModule = AppModule = __decorate([
                     uri: configService.get('database.uri'),
                 }),
                 inject: [config_1.ConfigService],
+            }),
+            graphql_1.GraphQLModule.forRoot({
+                driver: apollo_1.ApolloDriver,
+                autoSchemaFile: (0, path_1.join)(process.cwd(), 'src/schema.gql'),
+                sortSchema: true,
+                playground: process.env.NODE_ENV !== 'production',
+                introspection: process.env.NODE_ENV !== 'production',
+                context: ({ req }) => ({ req }),
             }),
             auth_module_1.AuthModule,
             mesure_module_1.MesureModule,

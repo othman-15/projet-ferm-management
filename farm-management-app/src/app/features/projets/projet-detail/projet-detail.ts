@@ -4,6 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 import { ProjetDetailDTO, Statusprojet } from '../../../core/models/projet.model';
 import { StatutHelper } from '../../../core/helpers/statut.helper';
+import { AssignBiologisteModalComponent } from '../assign-biologiste-modal/assign-biologiste-modal.component';
 import {ProjetService} from '../../../core/services/api/projet';
 import {BiologisteService} from '../../../core/services/api/biologiste';
 import {AuthService} from '../../../core/services/auth';
@@ -11,7 +12,7 @@ import {AuthService} from '../../../core/services/auth';
 @Component({
   selector: 'app-projet-detail',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, AssignBiologisteModalComponent], // ✅ Ajouter le modal
   templateUrl: './projet-detail.html',
   styleUrl: './projet-detail.css'
 })
@@ -26,6 +27,9 @@ export class ProjetDetailComponent implements OnInit {
   isLoading = true;
   errorMessage = '';
   projetId: number = 0;
+
+  // ✅ Contrôle du modal
+  isAssignModalOpen = false;
 
   ngOnInit() {
     this.route.params.subscribe(params => {
@@ -85,8 +89,19 @@ export class ProjetDetailComponent implements OnInit {
     }
   }
 
-  addBiologiste() {
-    this.router.navigate(['/projets', this.projetId, 'add-biologiste']);
+  // ✅ Ouvrir le modal d'affectation
+  openAssignModal() {
+    this.isAssignModalOpen = true;
+  }
+
+  // ✅ Fermer le modal
+  closeAssignModal() {
+    this.isAssignModalOpen = false;
+  }
+
+  // ✅ Recharger après affectation réussie
+  onAssignSuccess() {
+    this.loadProjetDetail();
   }
 
   getStatutColor(statut: Statusprojet): string {

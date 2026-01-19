@@ -83,7 +83,33 @@
           </p>
         </div>
       </div>
+      <div class="card" *ngIf="latestMesures.length > 0">
+        <div class="section-header">
+          <h2 class="section-title">
+            <span class="title-icon">📊</span>
+            Dernières Mesures
+          </h2>
+          <button class="btn-secondary" (click)="router.navigate(['/mesures/charts'])">
+            Voir tous les graphiques →
+          </button>
+        </div>
 
+        <div class="mesures-mini-list">
+          <div *ngFor="let mesure of latestMesures" class="mesure-mini-item">
+            <div class="mesure-mini-info">
+        <span class="mesure-mini-value">
+          {{ mesure.valeur }} {{ mesure.unite }}
+        </span>
+              <span class="mesure-mini-capteur">
+          🔬 Capteur {{ mesure.capteurId }}
+        </span>
+            </div>
+            <span class="mesure-mini-date">
+        {{ formatMesureDate(mesure.dateMesure) }}
+      </span>
+          </div>
+        </div>
+      </div>
       <!-- ========== LISTE DES PROJETS ========== -->
       <div class="card projets-section">
         <div class="section-header">

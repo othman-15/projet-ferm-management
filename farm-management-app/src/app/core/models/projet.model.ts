@@ -92,3 +92,117 @@ export interface ProjetDetailDTO {
   statut: Statusprojet;
   affectations: BiologisteAffecteDTO[];
 }
+export enum TypeEquipment {
+  TRACTEUR = 'TRACTEUR',
+  IRRIGATION = 'IRRIGATION',
+  SERRE = 'SERRE',
+  STOCKAGE = 'STOCKAGE',
+  AUTRE = 'AUTRE'
+}
+
+export enum TypeCapteur {
+  TEMPERATURE = 'TEMPERATURE',
+  HUMIDITE = 'HUMIDITE',
+  PH = 'PH',
+  LUMINOSITE = 'LUMINOSITE',
+  PRESSION = 'PRESSION',
+  AUTRE = 'AUTRE'
+}
+
+export interface RequestEquipmentDto {
+  nom: string;
+  type: TypeEquipment;
+  description?: string;
+  projetId: number;
+  dateInstallation: string;
+}
+
+export interface ResponseEquipmentDto {
+  id: number;
+  nom: string;
+  type: TypeEquipment;
+  description?: string;
+  projetId: number;
+  dateInstallation: string;
+  nombreCapteurs?: number;
+}
+
+export interface RequestCapteurDto {
+  nom: string;
+  type: TypeCapteur;
+  unite: string;
+  description?: string;
+}
+
+export interface ResponseCapteurDto {
+  id: number;
+  nom: string;
+  type: TypeCapteur;
+  unite: string;
+  description?: string;
+  equipmentId: number;
+  dateInstallation: string;
+  actif: boolean;
+}
+// ============================================
+// MESURE DTOs & TYPES (NestJS GraphQL)
+// ============================================
+
+export enum QualiteDonnee {
+  BONNE = 'BONNE',
+  MOYENNE = 'MOYENNE',
+  MAUVAISE = 'MAUVAISE'
+}
+
+export interface CreateMesureInput {
+  valeur: number;
+  unite: string;
+  dateMesure: string; // ISO 8601
+  qualiteDonnee: QualiteDonnee;
+  capteurId: string;
+  projetId: string;
+}
+
+export interface QueryMesureInput {
+  projetId?: string;
+  capteurId?: string;
+  dateDebut?: string;
+  dateFin?: string;
+  qualiteDonnee?: QualiteDonnee;
+  limit?: number;
+  page?: number;
+}
+
+export interface Mesure {
+  id: string;
+  valeur: number;
+  unite: string;
+  dateMesure: string;
+  qualiteDonnee: QualiteDonnee;
+  capteurId: string;
+  projetId: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface MesurePagination {
+  data: Mesure[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export interface MesureStatistics {
+  total: number;
+  parQualite: {
+    bonne: number;
+    moyenne: number;
+    mauvaise: number;
+  };
+  pourcentages: {
+    bonne: number;
+    moyenne: number;
+    mauvaise: number;
+  };
+}

@@ -1,0 +1,308 @@
+version: '3.8'
+
+services:
+  # -----------------------------------------------------------------
+  # 1. KEYCLOAK & DB (IAM)
+  # -----------------------------------------------------------------
+  keycloak-db:
+    image: postgres:15
+    container_name: keycloak-db
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - farm-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:latest
+    container_name: keycloak
+    command: start-dev --import-realm
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: password
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      # ✅ IMPORTANT : Permet de passer le frontend URL pour Docker
+      KC_HOSTNAME_URL: http://localhost:8080
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./realm-export.json:/opt/keycloak/data/import/realm-export.json
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+    networks:
+      - farm-net
+
+  # -----------------------------------------------------------------
+  # 2. DISCOVERY SERVICE (EUREKA)
+  # -----------------------------------------------------------------
+  farm-discovery-service:
+    build: ./Discovery-Service
+    container_name: farm-discovery-service
+    ports:
+      - '8761:8761'
+    networks:
+      - farm-net
+
+  # -----------------------------------------------------------------
+  # 3. CONFIG SERVICE
+  # -----------------------------------------------------------------
+  farm-config-service:
+    build: ./Configuration_Service
+    container_name: farm-config-service
+    ports:
+      - '9999:9999'
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://farm-discovery-service:8761/eureka/
+    networks:
+      - farm-net
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9999/actuator/health" ]
+      interval: 30s
+      retries: 4
+    depends_on:
+      farm-discovery-service:
+        condition: service_started
+
+  # -----------------------------------------------------------------
+  # 4. GATEWAY SERVICE
+  # -----------------------------------------------------------------
+  farm-gateway-service:
+    build: ./Gateway-Service
+    container_name: farm-gateway-service
+    ports:
+      - '8888:8888'
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://farm-discovery-service:8761/eureka/
+
+      # ✅ CORRECTION TYPO (underscore) & VALEUR (localhost pour matcher le token)
+      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://localhost:8080/realms/Fpl-ferme-management
+      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI=http://keycloak:8080/realms/Fpl-ferme-management/protocol/openid-connect/certs
+
+      # ✅ ROUTAGE NESTJS : On force les noms de conteneurs ici
+      # Pour Mesure Service
+      - spring.cloud.gateway.server.webflux.routes[0].id=mesure-service
+      - spring.cloud.gateway.server.webflux.routes[0].uri=http://farm-mesure-service:8083
+      - spring.cloud.gateway.server.webflux.routes[0].predicates[0]=Path=/mesures/**
+      # Pour Biologiste Service
+      - spring.cloud.gateway.server.webflux.routes[1].id=biologiste-service
+      - spring.cloud.gateway.server.webflux.routes[1].uri=http://farm-biologiste-service:8082
+      - spring.cloud.gateway.server.webflux.routes[1].predicates[0]=Path=/api/biologistes/**
+      - spring.cloud.gateway.server.webflux.routes[0].filters[0]=StripPrefix=1
+
+    networks:
+      - farm-net
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8888/actuator/health" ]
+      interval: 30s
+      retries: 4
+    depends_on:
+      farm-discovery-service:
+        condition: service_started
+      farm-config-service:
+        condition: service_started
+
+  # -----------------------------------------------------------------
+  # 5. BASE DE DONNÉES MÉTIER (MySQL)
+  # -----------------------------------------------------------------
+  mysql-db:
+    image: mysql:8.0
+    container_name: mysql-db
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: db-projet
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - farm-net
+    healthcheck:
+      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost", "-u", "root", "-proot" ]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+
+  # -----------------------------------------------------------------
+  # 6. PROJET SERVICE
+  # -----------------------------------------------------------------
+  farm-project-service:
+    build: ./Projet-Service
+    container_name: farm-project-service
+    ports:
+      - "8085:8085"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-db:3306/db-projet?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=com.mysql.cj.jdbc.Driver
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_SHOW_SQL=true
+      - CONFIG_SERVICE_URL=http://farm-config-service:9999
+      - GATEWAY_URL=http://farm-gateway-service:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://farm-discovery-service:8761/eureka/
+
+      # ✅ CORRECTION MAJEURE POUR L'AUTH
+      # 1. L'URL "Logique" (doit correspondre au champ 'iss' du token venant d'Angular)
+      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://localhost:8080/realms/Fpl-ferme-management
+
+      # 2. L'URL "Physique" (doit utiliser le réseau Docker pour télécharger les clés)
+      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI=http://keycloak:8080/realms/Fpl-ferme-management/protocol/openid-connect/certs
+
+    networks:
+      - farm-net
+    depends_on:
+      farm-discovery-service:
+        condition: service_started
+      farm-config-service:
+        condition: service_started
+      mysql-db:
+        condition: service_healthy
+
+  # -----------------------------------------------------------------
+  # 7. EQUIPMENT SERVICE
+  # -----------------------------------------------------------------
+  farm-equipment-service:
+    build: ./Equipment-Service
+    container_name: farm-equipment-service
+    ports:
+      - "8086:8086"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-db:3306/db-equipment?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=com.mysql.cj.jdbc.Driver
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_JPA_SHOW_SQL=true
+      - CONFIG_SERVICE_URL=http://farm-config-service:9999
+      - GATEWAY_URL=http://farm-gateway-service:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://farm-discovery-service:8761/eureka/
+
+      # ✅ CORRECTION MAJEURE (Même logique que Projet Service)
+      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://localhost:8080/realms/Fpl-ferme-management
+      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI=http://keycloak:8080/realms/Fpl-ferme-management/protocol/openid-connect/certs
+
+    networks:
+      - farm-net
+    depends_on:
+      farm-discovery-service:
+        condition: service_started
+      farm-config-service:
+        condition: service_started
+      mysql-db:
+        condition: service_healthy
+
+  # -----------------------------------------------------------------
+  # 8. DB POSTGRES POUR LE SERVICE BIOLOGISTE
+  # -----------------------------------------------------------------
+  biologiste-db:
+    image: postgres:15
+    container_name: biologiste-db
+    environment:
+      POSTGRES_DB: biologiste_db
+      POSTGRES_USER: biologiste_user
+      POSTGRES_PASSWORD: biologiste_pass
+    ports:
+      - "5433:5432"
+    volumes:
+      - biologiste_data:/var/lib/postgresql/data
+    networks:
+      - farm-net
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U biologiste_user -d biologiste_db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # -----------------------------------------------------------------
+  # 9. BIOLOGISTE SERVICE (NEST JS)
+  # -----------------------------------------------------------------
+  farm-biologiste-service:
+    build: ./Biologiste-Service
+    container_name: farm-biologiste-service
+    ports:
+      - "8082:8082"
+    networks:
+      - farm-net
+    environment:
+      - DB_HOST=biologiste-db
+      - DB_PORT=5432
+      - DB_USERNAME=biologiste_user
+      - DB_PASSWORD=biologiste_pass
+      - DB_DATABASE=biologiste_db
+
+      # IMPORTANT : Pour NestJS, assurez-vous qu'il utilise cette URL pour valider le token
+      - KEYCLOAK_AUTH_SERVER_URL=http://keycloak:8080
+      - KEYCLOAK_JWKS_URI=http://keycloak:8080/realms/Fpl-ferme-management/protocol/openid-connect/certs
+      - KEYCLOAK_REALM=Fpl-ferme-management
+      - NODE_ENV=production
+      - PORT=8082
+    depends_on:
+      keycloak:
+        condition: service_started
+      biologiste-db:
+        condition: service_healthy
+
+  # -----------------------------------------------------------------
+  # 10. BASE DE DONNÉES NOSQL (MongoDB)
+  # -----------------------------------------------------------------
+  mongo-db:
+    image: mongo:6.0
+    container_name: mongo-db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: mesure_admin
+      MONGO_INITDB_ROOT_PASSWORD: mesure_pass
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - farm-net
+
+  # -----------------------------------------------------------------
+  # 11. MESURE SERVICE (NEST JS + MONGO)
+  # -----------------------------------------------------------------
+  farm-mesure-service:
+    build: ./Mesure-Service
+    container_name: farm-mesure-service
+    ports:
+      - "8083:8083"
+    networks:
+      - farm-net
+    environment:
+      - MONGODB_URI=mongodb://mesure_admin:mesure_pass@mongo-db:27017/mesure_db?authSource=admin
+      - KEYCLOAK_AUTH_SERVER_URL=http://keycloak:8080
+      - KEYCLOAK_JWKS_URI=http://keycloak:8080/realms/Fpl-ferme-management/protocol/openid-connect/certs
+      - KEYCLOAK_REALM=Fpl-ferme-management
+      - NODE_ENV=production
+      - PORT=8083
+      - GATEWAY_URL=http://farm-gateway-service:8888
+    depends_on:
+      keycloak:
+        condition: service_started
+      mongo-db:
+        condition: service_started
+      farm-gateway-service:
+        condition: service_started
+
+volumes:
+  postgres_data:
+  mysql_data:
+  biologiste_data:
+  mongo_data:
+
+networks:
+  farm-net:
+    driver: bridge

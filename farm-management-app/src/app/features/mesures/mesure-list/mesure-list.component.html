@@ -1,0 +1,174 @@
+<div class="mesure-container">
+  <div class="mesure-content">
+
+    <!-- ========== HEADER ========== -->
+    <div class="mesure-header">
+      <div class="header-left">
+        <div class="header-title-section">
+          <h1 class="mesure-title">
+            📊 Mesures & Données
+          </h1>
+          <p class="mesure-subtitle">
+            Visualisez et analysez les données de vos capteurs
+          </p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn-secondary" (click)="navigateToCharts()">
+          📈 Voir Graphiques
+        </button>
+        <button class="btn-primary" (click)="openCreateMesureModal()">
+          ➕ Nouvelle Mesure
+        </button>
+      </div>
+    </div>
+
+    <!-- ========== LOADING STATE ========== -->
+    <div *ngIf="isLoading" class="loading-container">
+      <div class="card">
+        <div class="loading-spinner"></div>
+        <p>Chargement des mesures...</p>
+      </div>
+    </div>
+
+    <!-- ========== ERROR MESSAGE ========== -->
+    <div *ngIf="errorMessage && !isLoading" class="error-banner">
+      ⚠️ {{ errorMessage }}
+    </div>
+
+    <!-- ========== CONTENT ========== -->
+    <div *ngIf="!isLoading">
+
+      <!-- Quick Stats -->
+      <div class="stats-grid">
+        <div class="stat-card stat-card-total">
+          <div class="stat-icon">📊</div>
+          <div class="stat-content">
+            <p class="stat-label">Total Mesures</p>
+            <p class="stat-value">{{ mesures.length }}</p>
+          </div>
+        </div>
+        <div class="stat-card stat-card-bonne">
+          <div class="stat-icon">✅</div>
+          <div class="stat-content">
+            <p class="stat-label">Bonne Qualité</p>
+            <p class="stat-value">{{ countByQualite('BONNE') }}</p>
+          </div>
+        </div>
+        <div class="stat-card stat-card-moyenne">
+          <div class="stat-icon">⚠️</div>
+          <div class="stat-content">
+            <p class="stat-label">Qualité Moyenne</p>
+            <p class="stat-value">{{ countByQualite('MOYENNE') }}</p>
+          </div>
+        </div>
+        <div class="stat-card stat-card-mauvaise">
+          <div class="stat-icon">❌</div>
+          <div class="stat-content">
+            <p class="stat-label">Mauvaise Qualité</p>
+            <p class="stat-value">{{ countByQualite('MAUVAISE') }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="card filters-section">
+        <h3 class="filters-title">🔍 Filtres</h3>
+        <div class="filters-grid">
+          <div class="filter-item">
+            <label>Capteur</label>
+            <select class="input-field" [(ngModel)]="selectedCapteurId" (change)="applyFilters()">
+              <option value="">Tous les capteurs</option>
+              <option *ngFor="let capteur of uniqueCapteurs" [value]="capteur">
+                Capteur {{ capteur }}
+              </option>
+            </select>
+          </div>
+          <div class="filter-item">
+            <label>Qualité</label>
+            <select class="input-field" [(ngModel)]="selectedQualite" (change)="applyFilters()">
+              <option value="">Toutes qualités</option>
+              <option value="BONNE">Bonne</option>
+              <option value="MOYENNE">Moyenne</option>
+              <option value="MAUVAISE">Mauvaise</option>
+            </select>
+          </div>
+          <div class="filter-item">
+            <label>Date début</label>
+            <input type="date" class="input-field" [(ngModel)]="dateDebut" (change)="applyFilters()">
+          </div>
+          <div class="filter-item">
+            <label>Date fin</label>
+            <input type="date" class="input-field" [(ngModel)]="dateFin" (change)="applyFilters()">
+          </div>
+        </div>
+        <button class="btn-outline" (click)="resetFilters()">
+          🔄 Réinitialiser les filtres
+        </button>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="mesures.length === 0" class="card empty-state">
+        <div class="empty-icon">📊</div>
+        <p class="empty-text">Aucune mesure disponible</p>
+        <p class="empty-subtext">Commencez par enregistrer des mesures</p>
+        <button class="btn-primary" (click)="openCreateMesureModal()">
+          Créer la première mesure
+        </button>
+      </div>
+
+      <!-- Mesures Table -->
+      <div *ngIf="mesures.length > 0" class="card table-container">
+        <h3 class="table-title">📋 Liste des Mesures</h3>
+        <div class="table-wrapper">
+          <table class="mesures-table">
+            <thead>
+            <tr>
+              <th>Date</th>
+              <th>Capteur</th>
+              <th>Valeur</th>
+              <th>Qualité</th>
+              <th>Projet</th>
+              <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr *ngFor="let mesure of mesures" class="table-row">
+              <td class="date-cell">
+                {{ formatDate(mesure.dateMesure) }}
+              </td>
+              <td>
+                  <span class="capteur-badge">
+                    🔬 {{ mesure.capteurId }}
+                  </span>
+              </td>
+              <td class="valeur-cell">
+                <strong>{{ formatValeur(mesure.valeur, mesure.unite) }}</strong>
+              </td>
+              <td>
+                  <span class="qualite-badge" [ngClass]="getQualiteColor(mesure.qualiteDonnee)">
+                    {{ getQualiteIcon(mesure.qualiteDonnee) }} {{ getQualiteLabel(mesure.qualiteDonnee) }}
+                  </span>
+              </td>
+              <td>
+                  <span class="projet-badge">
+                    📋 {{ mesure.projetId }}
+                  </span>
+              </td>
+              <td>
+                <button class="btn-icon" (click)="viewDetails(mesure.id)" title="Voir détails">
+                  👁️
+                </button>
+                <button class="btn-icon btn-danger" (click)="deleteMesure(mesure.id)" title="Supprimer">
+                  🗑️
+                </button>
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

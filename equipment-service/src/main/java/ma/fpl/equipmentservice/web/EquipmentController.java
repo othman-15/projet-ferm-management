@@ -1,6 +1,7 @@
 package ma.fpl.equipmentservice.web;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import lombok.AllArgsConstructor;
 import ma.fpl.equipmentservice.dtos.*;
 import ma.fpl.equipmentservice.service.EquipmentService;
 import lombok.RequiredArgsConstructor;
@@ -12,13 +13,17 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/v1/equipments")
-@RequiredArgsConstructor
+
 @SecurityRequirement(name = "JWT-auth")
 public class EquipmentController {
 
     private final EquipmentService equipmentService;
 
-    // ===================== EQUIPMENT =====================
+    public EquipmentController(EquipmentService equipmentService) {
+        this.equipmentService = equipmentService;
+    }
+
+
 
     @PostMapping
     @PreAuthorize("hasAuthority('ADMIN')")
@@ -83,5 +88,22 @@ public class EquipmentController {
         return ResponseEntity.ok(
                 equipmentService.getCapteursByEquipment(equipmentId)
         );
+    }
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<Void> deleteEquipment(@PathVariable Long id) {
+        equipmentService.deleteEquipment(id);
+        return ResponseEntity.noContent().build();
+    }
+
+
+    @DeleteMapping("/{equipmentId}/capteurs/{capteurId}")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public ResponseEntity<Void> removeCapteur(
+            @PathVariable Long equipmentId,
+            @PathVariable Long capteurId
+    ) {
+        equipmentService.removeCapteur(equipmentId, capteurId);
+        return ResponseEntity.noContent().build();
     }
 }

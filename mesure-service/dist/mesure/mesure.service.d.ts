@@ -1,7 +1,7 @@
 import { Model } from 'mongoose';
 import { MesureDocument } from './entities/mesure.entity';
-import { CreateMesureDto } from './dto/create-mesure.dto';
-import { QueryMesureDto } from './dto/query-mesure.dto';
+import { CreateMesureInput } from './graphql/inputs/create-mesure.input';
+import { QueryMesureInput } from './graphql/inputs/query-mesure.input';
 import { EquipmentClient } from "../clients/equipment.client";
 import { ProjetClient } from "../clients/projet.client";
 export declare class MesureService {
@@ -10,8 +10,8 @@ export declare class MesureService {
     private readonly projetClient;
     private readonly logger;
     constructor(mesureModel: Model<MesureDocument>, equipmentClient: EquipmentClient, projetClient: ProjetClient);
-    create(createMesureDto: CreateMesureDto, user: any, token: string): Promise<MesureDocument>;
-    findAll(query: QueryMesureDto, user: any, token: string): Promise<{
+    create(createMesureInput: CreateMesureInput, user: any, token: string): Promise<MesureDocument>;
+    findAll(query: QueryMesureInput, user: any, token: string): Promise<{
         data: MesureDocument[];
         total: number;
         page: number;

@@ -12,7 +12,7 @@ import {
 })
 export class BiologisteService {
   private http = inject(HttpClient);
-  private apiUrl = `${environment.apiUrls.biologiste}/api/biologistes`; // ✅ Utiliser apiUrls.biologiste
+  private apiUrl = environment.apiUrls.biologiste; // Via Gateway : /api/biologistes
 
   getAllBiologistes(): Observable<BiologisteResponseDto[]> {
     return this.http.get<BiologisteResponseDto[]>(this.apiUrl);

@@ -6,7 +6,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 @FeignClient(
         name = "biologiste-service",
-        url = "http://localhost:8082"
+        url = "${GATEWAY_URL:http://localhost:8888}/farm-biologiste-service"
+
+
 )
 public interface BiologisteClient {
 

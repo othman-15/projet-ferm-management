@@ -8,12 +8,15 @@ import {
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Mesure, MesureDocument } from './entities/mesure.entity';
-import { CreateMesureDto } from './dto/create-mesure.dto';
-import { QueryMesureDto } from './dto/query-mesure.dto';
+import { CreateMesureInput } from './graphql/inputs/create-mesure.input';
+import { QueryMesureInput } from './graphql/inputs/query-mesure.input';
 import {EquipmentClient} from "../clients/equipment.client";
 import {ProjetClient} from "../clients/projet.client";
 
-
+/**
+ * Service de gestion des mesures
+ * Contient toute la logique métier
+ */
 @Injectable()
 export class MesureService {
     private readonly logger = new Logger(MesureService.name);
@@ -22,7 +25,7 @@ export class MesureService {
         @InjectModel(Mesure.name)
         private mesureModel: Model<MesureDocument>,
         private readonly equipmentClient: EquipmentClient,
-        private readonly projetClient: ProjetClient, // ✅ AJOUTER
+        private readonly projetClient: ProjetClient,
     ) {}
 
     /**
@@ -36,7 +39,7 @@ export class MesureService {
      * 4. Si BIOLOGISTE : il doit avoir accès au projet
      */
     async create(
-        createMesureDto: CreateMesureDto,
+        createMesureInput: CreateMesureInput, // ✅ AJOUTÉ
         user: any,
         token: string,
     ): Promise<MesureDocument> {
@@ -45,7 +48,7 @@ export class MesureService {
         );
 
         // ========== VALIDATION 1 : Date de mesure ==========
-        const dateMesure = new Date(createMesureDto.dateMesure);
+        const dateMesure = new Date(createMesureInput.dateMesure);
         const maintenant = new Date();
 
         if (dateMesure > maintenant) {
@@ -64,16 +67,16 @@ export class MesureService {
             );
         }
 
-        // ========== VALIDATION 2 : Vérifier que le PROJET existe ========== ✅ NOUVEAU
+        // ========== VALIDATION 2 : Vérifier que le PROJET existe ==========
         try {
             const projetExists = await this.projetClient.verifyProjetExists(
-                createMesureDto.projetId,
+                createMesureInput.projetId,
                 token,
             );
 
             if (!projetExists) {
                 throw new BadRequestException(
-                    `Le projet avec l'ID ${createMesureDto.projetId} n'existe pas`,
+                    `Le projet avec l'ID ${createMesureInput.projetId} n'existe pas`,
                 );
             }
         } catch (error) {
@@ -86,13 +89,13 @@ export class MesureService {
         // ========== VALIDATION 3 : Vérifier que le CAPTEUR existe ==========
         try {
             const capteurExists = await this.equipmentClient.verifyCapteurExists(
-                createMesureDto.capteurId,
+                createMesureInput.capteurId,
                 token,
             );
 
             if (!capteurExists) {
                 throw new BadRequestException(
-                    `Le capteur avec l'ID ${createMesureDto.capteurId} n'existe pas`,
+                    `Le capteur avec l'ID ${createMesureInput.capteurId} n'existe pas`,
                 );
             }
         } catch (error) {
@@ -102,32 +105,31 @@ export class MesureService {
             throw error;
         }
 
-        // ========== VALIDATION 4 : Contrôle d'accès BIOLOGISTE ========== ✅ AMÉLIORÉ
+        // ========== VALIDATION 4 : Contrôle d'accès BIOLOGISTE ==========
         if (
             user.roles.includes('BIOLOGISTE') &&
             !user.roles.includes('ADMIN')
         ) {
-            // Vérifier que le biologiste a accès au projet
             const hasAccess = await this.projetClient.verifyBiologisteAccess(
                 user.userId,
-                createMesureDto.projetId,
+                createMesureInput.projetId,
                 token,
             );
 
             if (!hasAccess) {
                 throw new ForbiddenException(
-                    `Vous n'avez pas accès au projet ${createMesureDto.projetId}`,
+                    `Vous n'avez pas accès au projet ${createMesureInput.projetId}`,
                 );
             }
 
             this.logger.log(
-                `✅ Biologiste ${user.username} a bien accès au projet ${createMesureDto.projetId}`,
+                `✅ Biologiste ${user.username} a bien accès au projet ${createMesureInput.projetId}`,
             );
         }
 
         // ========== CRÉATION DE LA MESURE ==========
         const mesure = new this.mesureModel({
-            ...createMesureDto,
+            ...createMesureInput,
             dateMesure,
         });
 
@@ -140,14 +142,13 @@ export class MesureService {
         return saved;
     }
 
-    // ... (garder les autres méthodes identiques : findAll, findByProjet, findOne, remove, getStatistics)
-
-    // ✅ AMÉLIORATION des autres méthodes avec vérification d'accès biologiste
-
+    /**
+     * Récupérer toutes les mesures avec filtres et pagination
+     */
     async findAll(
-        query: QueryMesureDto,
+        query: QueryMesureInput, // ✅ CORRIGÉ
         user: any,
-        token: string, // ✅ AJOUTER le token
+        token: string,
     ): Promise<{
         data: MesureDocument[];
         total: number;
@@ -172,7 +173,6 @@ export class MesureService {
                 );
             }
 
-            // ✅ VÉRIFIER l'accès au projet
             const hasAccess = await this.projetClient.verifyBiologisteAccess(
                 user.userId,
                 query.projetId,
@@ -244,10 +244,13 @@ export class MesureService {
         };
     }
 
+    /**
+     * Récupérer les mesures d'un projet
+     */
     async findByProjet(
         projetId: string,
         user: any,
-        token: string, // ✅ AJOUTER
+        token: string,
     ): Promise<MesureDocument[]> {
         this.logger.log(
             `Recherche des mesures du projet ${projetId} par ${user.username}`,
@@ -277,11 +280,16 @@ export class MesureService {
             .lean()
             .exec();
 
-        this.logger.log(`✅ ${mesures.length} mesures trouvées pour le projet ${projetId}`);
+        this.logger.log(
+            `✅ ${mesures.length} mesures trouvées pour le projet ${projetId}`,
+        );
 
         return mesures;
     }
 
+    /**
+     * Récupérer une mesure par ID
+     */
     async findOne(id: string, user: any, token: string): Promise<MesureDocument> {
         this.logger.log(`Recherche de la mesure ${id} par ${user.username}`);
 
@@ -312,6 +320,9 @@ export class MesureService {
         return mesure;
     }
 
+    /**
+     * Supprimer une mesure
+     */
     async remove(id: string): Promise<void> {
         this.logger.log(`Suppression de la mesure ${id}`);
 
@@ -324,6 +335,9 @@ export class MesureService {
         this.logger.log(`✅ Mesure ${id} supprimée avec succès`);
     }
 
+    /**
+     * Statistiques sur les mesures
+     */
     async getStatistics(projetId?: string): Promise<any> {
         const filter = projetId ? { projetId } : {};
 

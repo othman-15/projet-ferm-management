@@ -30,9 +30,9 @@ let MesureService = MesureService_1 = class MesureService {
         this.equipmentClient = equipmentClient;
         this.projetClient = projetClient;
     }
-    async create(createMesureDto, user, token) {
+    async create(createMesureInput, user, token) {
         this.logger.log(`Création d'une mesure par ${user.username} (${user.roles.join(', ')})`);
-        const dateMesure = new Date(createMesureDto.dateMesure);
+        const dateMesure = new Date(createMesureInput.dateMesure);
         const maintenant = new Date();
         if (dateMesure > maintenant) {
             throw new common_1.BadRequestException('La date de mesure ne peut pas être dans le futur');
@@ -43,9 +43,9 @@ let MesureService = MesureService_1 = class MesureService {
             this.logger.warn(`Date de mesure très ancienne : ${dateMesure.toISOString()}`);
         }
         try {
-            const projetExists = await this.projetClient.verifyProjetExists(createMesureDto.projetId, token);
+            const projetExists = await this.projetClient.verifyProjetExists(createMesureInput.projetId, token);
             if (!projetExists) {
-                throw new common_1.BadRequestException(`Le projet avec l'ID ${createMesureDto.projetId} n'existe pas`);
+                throw new common_1.BadRequestException(`Le projet avec l'ID ${createMesureInput.projetId} n'existe pas`);
             }
         }
         catch (error) {
@@ -53,9 +53,9 @@ let MesureService = MesureService_1 = class MesureService {
             throw error;
         }
         try {
-            const capteurExists = await this.equipmentClient.verifyCapteurExists(createMesureDto.capteurId, token);
+            const capteurExists = await this.equipmentClient.verifyCapteurExists(createMesureInput.capteurId, token);
             if (!capteurExists) {
-                throw new common_1.BadRequestException(`Le capteur avec l'ID ${createMesureDto.capteurId} n'existe pas`);
+                throw new common_1.BadRequestException(`Le capteur avec l'ID ${createMesureInput.capteurId} n'existe pas`);
             }
         }
         catch (error) {
@@ -64,14 +64,14 @@ let MesureService = MesureService_1 = class MesureService {
         }
         if (user.roles.includes('BIOLOGISTE') &&
             !user.roles.includes('ADMIN')) {
-            const hasAccess = await this.projetClient.verifyBiologisteAccess(user.userId, createMesureDto.projetId, token);
+            const hasAccess = await this.projetClient.verifyBiologisteAccess(user.userId, createMesureInput.projetId, token);
             if (!hasAccess) {
-                throw new common_1.ForbiddenException(`Vous n'avez pas accès au projet ${createMesureDto.projetId}`);
+                throw new common_1.ForbiddenException(`Vous n'avez pas accès au projet ${createMesureInput.projetId}`);
             }
-            this.logger.log(`✅ Biologiste ${user.username} a bien accès au projet ${createMesureDto.projetId}`);
+            this.logger.log(`✅ Biologiste ${user.username} a bien accès au projet ${createMesureInput.projetId}`);
         }
         const mesure = new this.mesureModel({
-            ...createMesureDto,
+            ...createMesureInput,
             dateMesure,
         });
         const saved = await mesure.save();

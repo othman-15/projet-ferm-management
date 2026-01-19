@@ -1,0 +1,143 @@
+<div class="charts-container">
+  <div class="charts-content">
+
+    <!-- ========== HEADER ========== -->
+    <div class="charts-header">
+      <div class="header-title-section">
+        <h1 class="charts-title">
+          📈 Visualisation des Mesures
+        </h1>
+        <p class="charts-subtitle">
+          Analysez vos données avec des graphiques interactifs
+        </p>
+      </div>
+      <button class="btn-primary" (click)="exportData()" *ngIf="mesures.length > 0">
+        💾 Exporter CSV
+      </button>
+    </div>
+
+    <!-- ========== LOADING STATE ========== -->
+    <div *ngIf="isLoading" class="loading-container">
+      <div class="card">
+        <div class="loading-spinner"></div>
+        <p>Chargement des données...</p>
+      </div>
+    </div>
+
+    <!-- ========== ERROR MESSAGE ========== -->
+    <div *ngIf="errorMessage && !isLoading" class="error-banner">
+      ⚠️ {{ errorMessage }}
+    </div>
+
+    <!-- ========== CONTENT ========== -->
+    <div *ngIf="!isLoading">
+
+      <!-- Filters -->
+      <div class="card filters-section">
+        <h3 class="filters-title">🔍 Filtres</h3>
+        <div class="filters-grid">
+          <div class="filter-item">
+            <label>Période</label>
+            <select class="input-field" [(ngModel)]="selectedPeriod" (change)="changePeriod()">
+              <option value="1">Dernières 24h</option>
+              <option value="7">7 derniers jours</option>
+              <option value="30">30 derniers jours</option>
+              <option value="90">90 derniers jours</option>
+            </select>
+          </div>
+          <div class="filter-item">
+            <label>Capteur</label>
+            <select class="input-field" [(ngModel)]="selectedCapteurId" (change)="loadMesures()">
+              <option value="">Tous les capteurs</option>
+              <option *ngFor="let capteur of uniqueCapteurs" [value]="capteur">
+                Capteur {{ capteur }}
+              </option>
+            </select>
+          </div>
+          <div class="filter-item">
+            <label>Date début</label>
+            <input type="date" class="input-field" [(ngModel)]="dateDebut" (change)="loadMesures()">
+          </div>
+          <div class="filter-item">
+            <label>Date fin</label>
+            <input type="date" class="input-field" [(ngModel)]="dateFin" (change)="loadMesures()">
+          </div>
+        </div>
+      </div>
+
+      <!-- Statistics Cards -->
+      <div class="stats-grid">
+        <div class="stat-card stat-card-min">
+          <div class="stat-icon">📉</div>
+          <div class="stat-content">
+            <p class="stat-label">Minimum</p>
+            <p class="stat-value">{{ stats.min | number: '1.2-2' }}</p>
+          </div>
+        </div>
+        <div class="stat-card stat-card-max">
+          <div class="stat-icon">📈</div>
+          <div class="stat-content">
+            <p class="stat-label">Maximum</p>
+            <p class="stat-value">{{ stats.max | number: '1.2-2' }}</p>
+          </div>
+        </div>
+        <div class="stat-card stat-card-avg">
+          <div class="stat-icon">➗</div>
+          <div class="stat-content">
+            <p class="stat-label">Moyenne</p>
+            <p class="stat-value">{{ stats.avg | number: '1.2-2' }}</p>
+          </div>
+        </div>
+        <div class="stat-card stat-card-count">
+          <div class="stat-icon">📊</div>
+          <div class="stat-content">
+            <p class="stat-label">Total Mesures</p>
+            <p class="stat-value">{{ stats.count }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="mesures.length === 0" class="card empty-state">
+        <div class="empty-icon">📊</div>
+        <p class="empty-text">Aucune mesure pour cette période</p>
+        <p class="empty-subtext">Essayez de modifier les filtres</p>
+      </div>
+
+      <!-- Charts Grid -->
+      <div *ngIf="mesures.length > 0">
+
+        <!-- Line Chart -->
+        <div class="card chart-card">
+          <h3 class="chart-title">📈 Évolution Temporelle</h3>
+          <div class="chart-wrapper">
+            <canvas #lineChartCanvas></canvas>
+          </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="charts-row">
+
+          <!-- Bar Chart -->
+          <div class="card chart-card">
+            <h3 class="chart-title">📊 Moyennes Journalières</h3>
+            <div class="chart-wrapper chart-wrapper-medium">
+              <canvas #barChartCanvas></canvas>
+            </div>
+          </div>
+
+          <!-- Pie Chart -->
+          <div class="card chart-card">
+            <h3 class="chart-title">🥧 Qualité des Données</h3>
+            <div class="chart-wrapper chart-wrapper-medium">
+              <canvas #pieChartCanvas></canvas>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>

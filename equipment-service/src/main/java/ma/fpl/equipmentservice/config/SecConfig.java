@@ -61,34 +61,34 @@ public class SecConfig {
 //        return source;
 //    }
 
-
-    @Bean
-    CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-
-        configuration.setAllowedOrigins(List.of(
-                "http://localhost:4200"
-        ));
-
-        configuration.setAllowedMethods(List.of(
-                "GET", "POST", "PUT", "DELETE", "OPTIONS"
-        ));
-
-        configuration.setAllowedHeaders(List.of(
-                "Authorization",
-                "Content-Type"
-        ));
-
-        configuration.setExposedHeaders(List.of(
-                "Authorization"
-        ));
-
-        configuration.setAllowCredentials(true);
-
-        UrlBasedCorsConfigurationSource source =
-                new UrlBasedCorsConfigurationSource();
-
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
+//
+//    @Bean
+//    CorsConfigurationSource corsConfigurationSource() {
+//        CorsConfiguration configuration = new CorsConfiguration();
+//
+//        configuration.setAllowedOrigins(List.of(
+//                "http://localhost:4200"
+//        ));
+//
+//        configuration.setAllowedMethods(List.of(
+//                "GET", "POST", "PUT", "DELETE", "OPTIONS"
+//        ));
+//
+//        configuration.setAllowedHeaders(List.of(
+//                "Authorization",
+//                "Content-Type"
+//        ));
+//
+//        configuration.setExposedHeaders(List.of(
+//                "Authorization"
+//        ));
+//
+//        configuration.setAllowCredentials(true);
+//
+//        UrlBasedCorsConfigurationSource source =
+//                new UrlBasedCorsConfigurationSource();
+//
+//        source.registerCorsConfiguration("/**", configuration);
+//        return source;
+//    }
 }
