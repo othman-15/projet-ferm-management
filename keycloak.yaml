@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+  labels:
+    app: keycloak
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: keycloak
+  template:
+    metadata:
+      labels:
+        app: keycloak
+    spec:
+      containers:
+        - name: keycloak
+          image: quay.io/keycloak/keycloak:latest
+          args: ["start-dev", "--import-realm"]
+          ports:
+            - containerPort: 8080
+
+          env:
+            # Vos variables existantes...
+            - name: KC_DB
+              value: "postgres"
+            - name: KC_DB_URL
+              value: "jdbc:postgresql://keycloak-postgres:5432/keycloak"
+            - name: KC_DB_USERNAME
+              value: "keycloak"
+            - name: KC_DB_PASSWORD
+              value: "password"
+            - name: KEYCLOAK_ADMIN
+              value: "admin"
+            - name: KEYCLOAK_ADMIN_PASSWORD
+              value: "admin"
+            - name: KC_PROXY
+              value: "edge"
+            - name: KC_HOSTNAME_STRICT
+              value: "false"
+            - name: KC_HTTP_ENABLED
+              value: "true"
+
+            # ✅ AJOUT IMPORTANT : Activer explicitement les endpoints de santé
+            - name: KC_HEALTH_ENABLED
+              value: "true"
+
+          volumeMounts:
+            - name: realm-import
+              mountPath: /opt/keycloak/data/import
+
+          # ✅ CORRECTION DE LA SONDE : Plus de patience !
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 9000
+            initialDelaySeconds: 90   # On lui donne 1min30 pour démarrer tranquille
+            periodSeconds: 10
+            failureThreshold: 5       # On accepte 5 échecs avant d'abandonner
+
+      volumes:
+        - name: realm-import
+          configMap:
+            name: farm-realm-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak
+spec:
+  type: LoadBalancer
+  selector:
+    app: keycloak
+  ports:
+    - port: 8080
+      targetPort: 8080

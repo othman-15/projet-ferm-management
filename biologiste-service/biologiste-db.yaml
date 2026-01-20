@@ -1,0 +1,102 @@
+# =========================================================
+# 1. SECRET : Les identifiants de la DB Biologiste
+# =========================================================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: biologiste-db-secret
+type: Opaque
+stringData:
+  # Valeurs tirées de votre Docker Compose
+  DB_USER: "biologiste_user"
+  DB_PASSWORD: "biologiste_pass"
+  DB_NAME: "biologiste_db"
+
+---
+# =========================================================
+# 2. PVC : Stockage persistant
+# =========================================================
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: biologiste-db-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+# =========================================================
+# 3. DEPLOYMENT : Le serveur Postgres
+# =========================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: biologiste-postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: biologiste-postgres
+  template:
+    metadata:
+      labels:
+        app: biologiste-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15
+          ports:
+            - containerPort: 5432
+
+          env:
+            # Mapping des variables standard Postgres vers notre Secret
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: biologiste-db-secret
+                  key: DB_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: biologiste-db-secret
+                  key: DB_PASSWORD
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: biologiste-db-secret
+                  key: DB_NAME
+
+          # Sonde de vie (Healthcheck)
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "biologiste_user", "-d", "biologiste_db"]
+            initialDelaySeconds: 10
+            periodSeconds: 10
+
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+
+      volumes:
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: biologiste-db-pvc
+
+---
+# =========================================================
+# 4. SERVICE : Nom DNS interne
+# =========================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: biologiste-postgres
+spec:
+  type: ClusterIP
+  selector:
+    app: biologiste-postgres
+  ports:
+    - port: 5432
+      targetPort: 5432

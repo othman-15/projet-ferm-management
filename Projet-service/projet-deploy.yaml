@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: farm-project-service
+  labels:
+    app: farm-project-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: farm-project-service
+  template:
+    metadata:
+      labels:
+        app: farm-project-service
+    spec:
+      containers:
+        - name: farm-project-service
+          image: ferme-agricole-app-farm-project-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8085
+
+          env:
+            # --- CONFIG & DISCOVERY ---
+            - name: CONFIG_SERVICE_URL
+              value: "http://farm-config-service:9999"
+            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+              value: "http://farm-discovery-service:8761/eureka/"
+
+            # --- KEYCLOAK (Configuration Custom) ---
+            - name: KEYCLOAK_URL
+              value: "http://keycloak:8080"
+
+            # ✅ AJOUT CRUCIAL ICI : La config standard pour Spring Security
+            # Cela permet de réparer l'erreur "JwtDecoder"
+            - name:  SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI
+              value: "http://keycloak:8080/realms/Fpl-ferme-management/protocol/openid-connect/certs"
+
+            - name: SPRING_JPA_HIBERNATE_DDL_AUTO
+              value: "update"
+            # --- DATABASE ---
+            - name: SPRING_DATASOURCE_URL
+              value: "jdbc:mysql://farm-mysql-service:3306/db-projet?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false"
+            - name: SPRING_DATASOURCE_USERNAME
+              value: "root"
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: farm-mysql-secret
+                  key: ROOT_PASSWORD
+
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8085
+            initialDelaySeconds: 15
+            periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: farm-project-service
+spec:
+  type: ClusterIP
+  selector:
+    app: farm-project-service
+  ports:
+    - port: 8085
+      targetPort: 8085

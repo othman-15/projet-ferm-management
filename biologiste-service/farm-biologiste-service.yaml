@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: farm-biologiste-service
+  labels:
+    app: farm-biologiste-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: farm-biologiste-service
+  template:
+    metadata:
+      labels:
+        app: farm-biologiste-service
+    spec:
+      containers:
+        - name: farm-biologiste-service
+          image: ferme-agricole-app-farm-biologiste-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8082
+
+          env:
+            # --- CORRECTION DU HOST ---
+            # Dans votre .env c'était 'biologiste-db', mais le Service K8s s'appelle 'biologiste-postgres'
+            - name: DB_HOST
+              value: "biologiste-postgres"
+
+            - name: DB_PORT
+              value: "5432"
+
+            # --- IDENTIFIANTS (Viennent du Secret) ---
+            - name: DB_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: biologiste-db-secret
+                  key: DB_USER
+
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: biologiste-db-secret
+                  key: DB_PASSWORD
+
+            - name: DB_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: biologiste-db-secret
+                  key: DB_NAME
+
+            # --- KEYCLOAK (Identique à votre .env) ---
+            - name: KEYCLOAK_AUTH_SERVER_URL
+              value: "http://keycloak:8080"
+
+            - name: KEYCLOAK_JWKS_URI
+              value: "http://keycloak:8080/realms/Fpl-ferme-management/protocol/openid-connect/certs"
+
+            - name: KEYCLOAK_REALM
+              value: "Fpl-ferme-management"
+
+            # --- DIVERS ---
+            - name: NODE_ENV
+              value: "production"
+            - name: PORT
+              value: "8082"
+
+          readinessProbe:
+            tcpSocket:
+              port: 8082
+            initialDelaySeconds: 10
+            periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: farm-biologiste-service
+spec:
+  type: ClusterIP
+  selector:
+    app: farm-biologiste-service
+  ports:
+    - port: 8082
+      targetPort: 8082

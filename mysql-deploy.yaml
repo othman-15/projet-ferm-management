@@ -1,0 +1,104 @@
+# =========================================================
+# 1. SECRET : Pour stocker le mot de passe "root" en sécurité
+# =========================================================
+apiVersion: v1
+kind: Secret
+metadata:
+  name: farm-mysql-secret
+type: Opaque
+stringData:
+  # Kubernetes va encoder ça tout seul.
+  ROOT_PASSWORD: "root"
+
+---
+# =========================================================
+# 2. PVC : Pour ne pas perdre les données si le Pod redémarre
+# =========================================================
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: farm-mysql-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      # 1Go est suffisant pour le développement
+      storage: 1Gi
+  # On laisse Kubernetes utiliser le stockage par défaut du cluster (hostPath ou cloud)
+
+---
+# =========================================================
+# 3. SERVICE : L'adresse réseau interne (DNS)
+# =========================================================
+apiVersion: v1
+kind: Service
+metadata:
+  name: farm-mysql-service
+spec:
+  type: ClusterIP
+  selector:
+    app: farm-mysql-service
+  ports:
+    - port: 3306
+      targetPort: 3306
+
+---
+# =========================================================
+# 4. DEPLOYMENT : Le conteneur MySQL lui-même
+# =========================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: farm-mysql-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: farm-mysql-service
+  template:
+    metadata:
+      labels:
+        app: farm-mysql-service
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          imagePullPolicy: IfNotPresent
+
+          # ✅ INDISPENSABLE : Pour éviter les erreurs de connexion "Public Key Retrieval"
+          # avec les connecteurs Java Spring Boot.
+          args: ["--default-authentication-plugin=mysql_native_password"]
+
+          ports:
+            - containerPort: 3306
+
+          env:
+            # On récupère le mot de passe depuis le SECRET défini en haut
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: farm-mysql-secret
+                  key: ROOT_PASSWORD
+
+            # 💡 Note : On ne définit pas MYSQL_DATABASE ici.
+            # Vos services Spring Boot créeront 'db-projet' et 'db-equipment'
+            # eux-mêmes grâce à l'option JDBC 'createDatabaseIfNotExist=true'.
+
+          # ✅ SONDE DE DISPONIBILITÉ :
+          # Kubernetes n'enverra pas de trafic tant que MySQL n'est pas prêt.
+          readinessProbe:
+            exec:
+              command: ["mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            timeoutSeconds: 5
+
+          volumeMounts:
+            - name: mysql-storage
+              mountPath: /var/lib/mysql
+
+      volumes:
+        - name: mysql-storage
+          persistentVolumeClaim:
+            claimName: farm-mysql-pvc

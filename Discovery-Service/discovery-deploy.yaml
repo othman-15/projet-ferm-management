@@ -1,45 +1,55 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: faculty-discovery-service
+  name: farm-discovery-service
   labels:
-    app: faculty-discovery-service
+    app: farm-discovery-service
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: faculty-discovery-service
+      app: farm-discovery-service
   template:
     metadata:
       labels:
-        app: faculty-discovery-service
+        app: farm-discovery-service
     spec:
       containers:
-        - name: faculty-discovery-service
-          image: faculty_management-faculty-discovery-service:latest
-          imagePullPolicy: Always
+        - name: farm-discovery-service
+          # ✅ Nom de l'image Docker Compose
+          image: ferme-agricole-app-farm-discovery-service:latest
+
+          # ✅ IMPORTANT : Ne pas télécharger, utiliser l'image locale
+          imagePullPolicy: IfNotPresent
+
           ports:
             - containerPort: 8761
+
           env:
+            # Connexion au Config Service (optionnel si Eureka a sa propre config,
+            # mais souvent utile dans Spring Cloud)
             - name: CONFIG_SERVICE_URL
-              value: "http://faculty-config-service:9999"
+              value: "http://farm-config-service:9999"
+
           readinessProbe:
             httpGet:
               path: /actuator/health
               port: 8761
-            initialDelaySeconds: 5
+            initialDelaySeconds: 10
             periodSeconds: 10
+            failureThreshold: 3
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: faculty-discovery-service
+  name: farm-discovery-service
 spec:
-  type:  LoadBalancer
+  # ✅ LoadBalancer permet d'accéder au Dashboard Eureka depuis votre navigateur
+  # URL : http://localhost:8761
+  type: LoadBalancer
   selector:
-    app: faculty-discovery-service
+    app: farm-discovery-service
   ports:
     - port: 8761
       targetPort: 8761
-

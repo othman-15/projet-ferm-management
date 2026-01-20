@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: farm-mesure-service
+  labels:
+    app: farm-mesure-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: farm-mesure-service
+  template:
+    metadata:
+      labels:
+        app: farm-mesure-service
+    spec:
+      containers:
+        - name: farm-mesure-service
+          image: ferme-agricole-app-farm-mesure-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8083
+
+          env:
+            # --- 1. MONGODB ---
+            # ✅ Correction : Utilisation du user "mesure_admin" et du host "mesure-mongodb"
+            - name: MONGODB_URI
+              value: "mongodb://mesure_admin:mesure_pass@mesure-mongodb:27017/mesure_db?authSource=admin"
+
+            # --- 2. KEYCLOAK ---
+            - name: KEYCLOAK_REALM
+              value: "Fpl-ferme-management"
+
+            - name: KEYCLOAK_AUTH_SERVER_URL
+              value: "http://keycloak:8080"
+
+            - name: KEYCLOAK_JWKS_URI
+              value: "http://keycloak:8080/realms/Fpl-ferme-management/protocol/openid-connect/certs"
+
+            # --- 3. GATEWAY & SERVICES ---
+            - name: GATEWAY_URL
+              value: "http://farm-gateway-service:8888"
+
+            # ✅ Correction : On écrit l'URL complète (K8s ne remplace pas ${GATEWAY_URL} tout seul ici)
+            - name: EQUIPMENT_SERVICE_URL
+              value: "http://farm-gateway-service:8888/EQUIPMENT-SERVICE"
+
+            - name: PROJET_SERVICE_URL
+              value: "http://farm-gateway-service:8888/PROJET-SERVICE"
+
+            # --- 4. CONFIG APP ---
+            - name: PORT
+              value: "8083"
+            - name: NODE_ENV
+              value: "production"
+            - name: FRONTEND_URL
+              value: "http://localhost:4200"
+
+          readinessProbe:
+            tcpSocket:
+              port: 8083
+            initialDelaySeconds: 10
+            periodSeconds: 10
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: farm-mesure-service
+spec:
+  type: ClusterIP
+  selector:
+    app: farm-mesure-service
+  ports:
+    - port: 8083
+      targetPort: 8083

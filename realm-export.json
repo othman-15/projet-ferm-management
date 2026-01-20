@@ -37,7 +37,7 @@
   "editUsernameAllowed": false,
   "bruteForceProtected": false,
   "permanentLockout": false,
-  "maxTemporaryLockouts": 0,
+
   "bruteForceStrategy": "MULTIPLE",
   "maxFailureWaitSeconds": 900,
   "minimumQuickLoginWaitSeconds": 60,
@@ -182,6 +182,7 @@
                 "manage-authorization",
                 "manage-clients",
                 "query-clients",
+                "view-users",
                 "view-users",
                 "view-authorization",
                 "manage-users",
