@@ -71,7 +71,7 @@ export class ProjetFormComponent implements OnInit {
           typeCulture: projet.typeCulture,
           dateDebut: projet.dateDebut,
           dateFin: projet.dateFin,
-          statusProjet: projet.statusProjet
+          statusProjet: projet.statut
         });
       },
       error: (error) => {

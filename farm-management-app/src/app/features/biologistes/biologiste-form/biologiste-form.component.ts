@@ -27,30 +27,37 @@ export class BiologisteFormComponent implements OnInit {
   currentUserKeycloakId = '';
 
   ngOnInit() {
-    this.loadCurrentUser();
-    this.initForm();
+    this.initForm();        // d’abord le form
+    this.loadCurrentUser(); // ensuite les données async
   }
 
   async loadCurrentUser() {
     try {
       const userInfo = await this.authService.getUserInfo();
-      // Extraire le Keycloak ID depuis les informations utilisateur
-      // Note: Vous devrez peut-être ajuster selon votre structure Keycloak
-      this.currentUserKeycloakId = userInfo.username; // ou userInfo.sub
+
+      this.currentUserKeycloakId = userInfo.sub || userInfo.username;
+
+      // 🔥 PATCH DU FORMULAIRE
+      this.biologisteForm.patchValue({
+        keycloakUserId: this.currentUserKeycloakId
+      });
+
     } catch (error) {
       console.error('Error loading user info:', error);
+      this.errorMessage = 'Impossible de charger les informations utilisateur';
     }
   }
 
   initForm() {
     this.biologisteForm = this.fb.group({
-      keycloakUserId: [this.currentUserKeycloakId, [Validators.required]],
+      keycloakUserId: ['', Validators.required],
       nom: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
       specialite: ['', [Validators.minLength(3)]],
       telephone: ['', [Validators.pattern(/^[0-9+\-\s()]*$/)]],
       actif: [true]
     });
   }
+
 
   onSubmit() {
     if (this.biologisteForm.invalid) {

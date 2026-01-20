@@ -8,6 +8,7 @@ export interface UserInfo {
   firstName: string;
   lastName: string;
   roles: string[];
+  sub?: string;
 }
 
 @Injectable({

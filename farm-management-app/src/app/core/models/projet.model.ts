@@ -45,14 +45,15 @@ export interface RequestProjetDTO {
   statusProjet: Statusprojet;
 }
 
-export interface ResponseProjetDTO {
+export interface ProjetDetailDTO {
   idProjet: number;
   nom: string;
   description: string;
-  typeCulture: string;
-  dateDebut: string;
-  dateFin: string;
-  statusProjet: Statusprojet;
+  typeCulture: string;        // ← AJOUTÉ
+  dateDebut: string;          // ← AJOUTÉ
+  dateFin: string;            // ← AJOUTÉ
+  statut: Statusprojet;
+  affectations: BiologisteAffecteDTO[];
 }
 
 // ============================================
@@ -78,20 +79,28 @@ export interface ResponseAffectationDTO {
 
 export interface BiologisteAffecteDTO {
   biologisteId: string;
-  nom: string;
-  telephone: string;
-  specialite: string;
+  nom: string;               // ← Assurez-vous que c'est bien là
+  telephone?: string;        // ← Optionnel
+  specialite?: string;       // ← Optionnel
   roleDansProjet: string;
   dateAffectation: string;
 }
-
-export interface ProjetDetailDTO {
+export interface ResponseProjetDTO {
   idProjet: number;
   nom: string;
   description: string;
+  typeCulture: string;
+  dateDebut: string;
+  dateFin: string;
   statut: Statusprojet;
-  affectations: BiologisteAffecteDTO[];
 }
+// export interface ProjetDetailDTO {
+//   idProjet: number;
+//   nom: string;
+//   description: string;
+//   statut: Statusprojet;
+//   affectations: BiologisteAffecteDTO[];
+// }
 export enum TypeEquipment {
   TRACTEUR = 'TRACTEUR',
   IRRIGATION = 'IRRIGATION',

@@ -1,27 +1,188 @@
-<!-- ... code existant ... -->
+<div class="projet-detail-container">
 
-<!-- Section Équipe -->
-<div class="card equipe-section">
-  <div class="section-header">
-    <h2 class="section-title">
-      <span class="title-icon">👥</span>
-      Équipe du Projet
-    </h2>
-    <button
-      *ngIf="hasRole('ADMIN')"
-      class="btn-primary"
-      (click)="openAssignModal()">
-      ➕ Affecter un Biologiste
+  <!-- ========== LOADING STATE ========== -->
+  <div *ngIf="isLoading" class="loading-container">
+    <div class="card">
+      <div class="loading-spinner"></div>
+      <p>Chargement des détails du projet...</p>
+    </div>
+  </div>
+
+  <!-- ========== ERROR MESSAGE ========== -->
+  <div *ngIf="errorMessage && !isLoading" class="error-banner">
+    <div class="error-content">
+      <span class="error-icon">⚠️</span>
+      <span>{{ errorMessage }}</span>
+    </div>
+    <button class="btn-secondary" (click)="goBack()">
+      ← Retour au Dashboard
     </button>
   </div>
 
-  <!-- ... reste du code ... -->
-</div>
+  <!-- ========== CONTENT ========== -->
+  <div *ngIf="!isLoading && projet" class="detail-content">
 
-<!-- ✅ MODAL D'AFFECTATION -->
-<app-assign-biologiste-modal
-  [projetId]="projetId"
-  [isOpen]="isAssignModalOpen"
-  (close)="closeAssignModal()"
-  (success)="onAssignSuccess()">
-</app-assign-biologiste-modal>
+    <!-- ========== HEADER ACTIONS ========== -->
+    <div class="detail-header">
+      <button class="btn-back" (click)="goBack()">
+        ← Retour
+      </button>
+
+      <div class="header-actions" *ngIf="hasRole('ADMIN')">
+        <button class="btn-secondary" (click)="editProjet()">
+          ✏️ Modifier
+        </button>
+        <button class="btn-danger" (click)="deleteProjet()">
+          🗑️ Supprimer
+        </button>
+      </div>
+    </div>
+
+    <!-- ========== PROJET INFO CARD ========== -->
+    <div class="card projet-info-card">
+      <div class="projet-header-detail">
+        <div class="projet-title-section">
+          <h1 class="projet-name">{{ projet.nom }}</h1>
+          <span
+            class="projet-status-badge"
+            [ngClass]="getStatutColor(projet.statut)">
+            {{ getStatutIcon(projet.statut) }} {{ getStatutLabel(projet.statut) }}
+          </span>
+        </div>
+      </div>
+
+      <div class="projet-details-grid">
+        <!-- Description -->
+        <div class="detail-block full-width">
+          <h3 class="detail-label">📝 Description</h3>
+          <p class="detail-value description-text">
+            {{ projet.description || 'Aucune description disponible' }}
+          </p>
+        </div>
+
+        <!-- Type de Culture -->
+        <div class="detail-block">
+          <h3 class="detail-label">🌱 Type de Culture</h3>
+          <p class="detail-value">{{ projet.typeCulture }}</p>
+        </div>
+
+        <!-- ID Projet -->
+        <div class="detail-block">
+          <h3 class="detail-label">🔢 ID Projet</h3>
+          <p class="detail-value">#{{ projet.idProjet }}</p>
+        </div>
+
+        <!-- Date de Début -->
+        <div class="detail-block">
+          <h3 class="detail-label">📅 Date de Début</h3>
+          <p class="detail-value">{{ projet.dateDebut | date: 'dd/MM/yyyy' }}</p>
+        </div>
+
+        <!-- Date de Fin -->
+        <div class="detail-block">
+          <h3 class="detail-label">📅 Date de Fin</h3>
+          <p class="detail-value">{{ projet.dateFin | date: 'dd/MM/yyyy' }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== STATISTIQUES ========== -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-icon">👥</div>
+        <div class="stat-content">
+          <p class="stat-label">Biologistes</p>
+          <p class="stat-value">{{ projet.affectations.length || 0 }}</p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">📆</div>
+        <div class="stat-content">
+          <p class="stat-label">Durée</p>
+          <p class="stat-value">
+            {{ calculateDuration(projet.dateDebut, projet.dateFin) }} jours
+          </p>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon">⏱️</div>
+        <div class="stat-content">
+          <p class="stat-label">Statut</p>
+          <p class="stat-value">{{ getStatutLabel(projet.statut) }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== ÉQUIPE SECTION ========== -->
+    <div class="card equipe-section">
+      <div class="section-header">
+        <h2 class="section-title">
+          <span class="title-icon">👥</span>
+          Équipe du Projet
+        </h2>
+        <button
+          *ngIf="hasRole('ADMIN')"
+          class="btn-primary"
+          (click)="openAssignModal()">
+          ➕ Affecter un Biologiste
+        </button>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!projet.affectations || projet.affectations.length === 0" class="empty-state">
+        <div class="empty-icon">👤</div>
+        <p class="empty-text">Aucun biologiste affecté à ce projet</p>
+        <button
+          *ngIf="hasRole('ADMIN')"
+          class="btn-primary"
+          (click)="openAssignModal()">
+          Affecter le premier biologiste
+        </button>
+      </div>
+
+      <!-- Liste des Biologistes -->
+      <div *ngIf="projet.affectations && projet.affectations.length > 0" class="biologistes-grid">
+        <div
+          *ngFor="let biologiste of projet.affectations"
+          class="biologiste-card">
+
+          <!-- Avatar -->
+          <div class="biologiste-avatar">
+            {{ getInitials(biologiste.nom) }}
+          </div>
+
+          <!-- Informations -->
+          <div class="biologiste-info">
+            <h3 class="biologiste-name">{{ biologiste.nom }}</h3>
+
+            <div class="biologiste-details">
+              <div class="biologiste-detail-item" *ngIf="biologiste.specialite">
+                <span class="detail-icon">🔬</span>
+                <span class="detail-text">{{ biologiste.specialite }}</span>
+              </div>
+
+              <div class="biologiste-detail-item">
+                <span class="detail-icon">📅</span>
+                <span class="detail-text">
+                  Affecté {{ getTimeSinceAffectation(biologiste.dateAffectation) }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ========== MODAL D'AFFECTATION ========== -->
+  <app-assign-biologiste-modal
+    [projetId]="projetId"
+    [isOpen]="isAssignModalOpen"
+    (close)="closeAssignModal()"
+    (success)="onAssignSuccess()">
+  </app-assign-biologiste-modal>
+
+</div>

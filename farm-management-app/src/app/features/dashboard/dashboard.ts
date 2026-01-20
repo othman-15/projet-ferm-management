@@ -104,7 +104,7 @@ export class DashboardComponent implements OnInit {
   }
 
   getProjetsByStatut(statut: string): ResponseProjetDTO[] {
-    return this.projets.filter(p => p.statusProjet === statut);
+    return this.projets.filter(p => p.statut === statut);
   }
 
   viewProjetDetail(projetId: number) {
