@@ -7,10 +7,8 @@ import {
   Param,
   ParseIntPipe,
   UseGuards,
-  Request,
   HttpCode,
   HttpStatus,
-  ForbiddenException,
   ValidationPipe,
   Logger,
 } from '@nestjs/common';
@@ -30,7 +28,7 @@ export class BiologisteController {
 
   constructor(private readonly biologisteService: BiologisteService) {}
 
-  // 🌐 Validation inter-services par Keycloak UUID
+  // 🌐 Validation inter-services par Keycloak UUID (PUBLIC ou ADMIN selon ton choix)
   @Get('keycloak/:keycloakId/exists')
   @ApiParam({ name: 'keycloakId', type: 'string', format: 'uuid' })
   async existeParKeycloakId(
@@ -40,30 +38,22 @@ export class BiologisteController {
     return { exists };
   }
 
-  // 🎯 UPSERT
+  // 🎯 CREATE / UPDATE — ADMIN ONLY
   @Post()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('ADMIN', 'BIOLOGIST')
+  @Roles('ADMIN')
   @HttpCode(HttpStatus.OK)
   async upsertBiologiste(
-      @Body(ValidationPipe) dto: UpsertBiologisteDto,
-      @Request() req,
+      @Body(new ValidationPipe({ whitelist: true })) dto: UpsertBiologisteDto,
   ): Promise<BiologisteResponseDto> {
-    // Protection
-    if (req.user.roles.includes('BIOLOGIST') && !req.user.roles.includes('ADMIN')) {
-      if (dto.keycloakUserId !== req.user.userId) {
-        throw new ForbiddenException('Accès refusé');
-      }
-    }
-
     const biologiste = await this.biologisteService.upsert(dto);
     return BiologisteResponseDto.fromEntity(biologiste);
   }
 
-  // 🔒 Récupérer par ID numérique
+  // 🔒 Récupérer par ID
   @Get(':id')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('ADMIN', 'BIOLOGIST')
+  @Roles('ADMIN')
   @ApiParam({ name: 'id', type: 'number' })
   async getById(
       @Param('id', ParseIntPipe) id: number,
@@ -75,7 +65,7 @@ export class BiologisteController {
   // 🔒 Récupérer par Keycloak UUID
   @Get('keycloak/:keycloakId')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('ADMIN', 'BIOLOGIST')
+  @Roles('ADMIN')
   @ApiParam({ name: 'keycloakId', type: 'string', format: 'uuid' })
   async getByKeycloakId(
       @Param('keycloakId') keycloakId: string,
@@ -84,10 +74,10 @@ export class BiologisteController {
     return BiologisteResponseDto.fromEntity(biologiste);
   }
 
-  // 🔒 Liste
+  // 🔒 Liste des biologistes actifs
   @Get()
   @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('ADMIN', 'BIOLOGIST')
+  @Roles('ADMIN')
   async getAll(): Promise<BiologisteResponseDto[]> {
     const biologistes = await this.biologisteService.findAllActifs();
     return biologistes.map((b) => BiologisteResponseDto.fromEntity(b));

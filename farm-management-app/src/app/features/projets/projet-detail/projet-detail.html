@@ -92,17 +92,25 @@
         <div class="stat-icon">👥</div>
         <div class="stat-content">
           <p class="stat-label">Biologistes</p>
-          <p class="stat-value">{{ projet.affectations.length || 0 }}</p>
+          <p class="stat-value">{{ projet.affectations.length }}</p>
         </div>
       </div>
 
-      <div class="stat-card">
+      <div class="stat-card" *ngIf="projet.dateDebut && projet.dateFin">
         <div class="stat-icon">📆</div>
         <div class="stat-content">
           <p class="stat-label">Durée</p>
           <p class="stat-value">
             {{ calculateDuration(projet.dateDebut, projet.dateFin) }} jours
           </p>
+        </div>
+      </div>
+
+      <div class="stat-card" *ngIf="!projet.dateDebut || !projet.dateFin">
+        <div class="stat-icon">📆</div>
+        <div class="stat-content">
+          <p class="stat-label">Durée</p>
+          <p class="stat-value">Non définie</p>
         </div>
       </div>
 

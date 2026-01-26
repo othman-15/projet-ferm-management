@@ -12,7 +12,7 @@ import {AuthService} from '../../../core/services/auth';
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './biologiste-form.component.html',
-  styleUrl: './biologiste-form.component.css'
+  styleUrls: ['./biologiste-form.component.css']
 })
 export class BiologisteFormComponent implements OnInit {
   private fb = inject(FormBuilder);

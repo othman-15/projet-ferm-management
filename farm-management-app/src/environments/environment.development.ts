@@ -9,7 +9,7 @@ export const environment = {
 
     // Pour les autres, appliquez la même logique si leurs services ajoutent aussi le chemin :
     equipment: 'http://localhost:8888/EQUIPMENT-SERVICE',
-    biologiste: 'http://localhost:8888', // Attention aux routes manuelles ici
+    biologiste: 'http://localhost:8888/biologiste-service', // Attention aux routes manuelles ici
     mesure: 'http://localhost:8888'      // Attention aux routes manuelles ici
   },
 

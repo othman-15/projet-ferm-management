@@ -137,7 +137,10 @@ export class ProjetDetailComponent implements OnInit {
     const diffYears = Math.floor(diffMonths / 12);
     return diffYears === 1 ? "Il y a 1 an" : `Il y a ${diffYears} ans`;
   }
-  calculateDuration(dateDebut: string, dateFin: string): number {
+  calculateDuration(dateDebut: string | null | undefined, dateFin: string | null | undefined): number {
+    if (!dateDebut || !dateFin) {
+      return 0;
+    }
     const debut = new Date(dateDebut);
     const fin = new Date(dateFin);
     const diffTime = Math.abs(fin.getTime() - debut.getTime());

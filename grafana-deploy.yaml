@@ -33,7 +33,7 @@ spec:
               value: "ouseffar.othman@etu.uae.ac.ma"
             - name: GF_SMTP_PASSWORD
               #mot de passe d’application Gmail
-              value: "ixokmpbmgscsapbv"
+              value: ""
             - name: GF_SMTP_FROM_ADDRESS # adresse affichée comme expéditeur
               value: "ouseffar.othman@etu.uae.ac.ma"
             - name: GF_SMTP_FROM_NAME

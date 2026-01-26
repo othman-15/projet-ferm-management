@@ -49,9 +49,9 @@ export interface ProjetDetailDTO {
   idProjet: number;
   nom: string;
   description: string;
-  typeCulture: string;        // ← AJOUTÉ
-  dateDebut: string;          // ← AJOUTÉ
-  dateFin: string;            // ← AJOUTÉ
+  typeCulture?: string | null;    // ← Ajoutez ? et | null
+  dateDebut?: string | null;      // ← Ajoutez ? et | null
+  dateFin?: string | null;        // ← Ajoutez ? et | null
   statut: Statusprojet;
   affectations: BiologisteAffecteDTO[];
 }

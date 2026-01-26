@@ -146,10 +146,14 @@ public class ProjetServiceImp  implements ProjetService{
                         })
                         .toList();
 
+        // ✅ SOLUTION : Utilisez le Builder ou définissez TOUS les champs
         ProjetDetailDTO dto = new ProjetDetailDTO();
         dto.setIdProjet(projet.getIdProjet());
         dto.setNom(projet.getNom());
         dto.setDescription(projet.getDescription());
+        dto.setTypeCulture(projet.getTypeCulture());      // ← AJOUTEZ
+        dto.setDateDebut(projet.getDateDebut());          // ← AJOUTEZ
+        dto.setDateFin(projet.getDateFin());              // ← AJOUTEZ
         dto.setStatut(projet.getStatusProjet());
         dto.setAffectations(biologistes);
 
